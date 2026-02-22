@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createHash } from "crypto";
 import LoginForm from "./LoginForm";
+import LogoutButton from "./LogoutButton";
 
 const SALT = "comfortshop2026";
 
@@ -31,18 +32,7 @@ export default async function AdminLayout({
           <h1 className="text-lg font-bold text-gray-900">
             ComfortShop — Адмінпанель
           </h1>
-          <form action="/api/admin/login" method="POST">
-            <button
-              type="button"
-              onClick={async () => {
-                await fetch("/api/admin/login", { method: "DELETE" });
-                window.location.reload();
-              }}
-              className="text-sm text-gray-500 hover:text-gray-900"
-            >
-              Вийти
-            </button>
-          </form>
+          <LogoutButton />
         </div>
       </div>
       <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
