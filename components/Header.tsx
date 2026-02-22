@@ -10,7 +10,7 @@ const nav = [
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header className="md:sticky md:top-0 z-50 bg-white shadow-sm">
       <div className="border-b border-gray-200">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <Link href="/" className="flex items-center gap-2">
