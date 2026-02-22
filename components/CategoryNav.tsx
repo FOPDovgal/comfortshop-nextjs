@@ -1,22 +1,26 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import Link from "next/link";
 import { CATEGORIES, type Category } from "@/lib/categories";
 
-export default function CategoryNav() {
-  const [active, setActive] = useState<Category | null>(null);
+interface Props {
+  active: Category | null;
+  onActive: (cat: Category | null) => void;
+}
+
+export default function CategoryNav({ active, onActive }: Props) {
   const navRef = useRef<HTMLDivElement>(null);
 
   // Close desktop dropdown on click outside
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setActive(null);
+        onActive(null);
       }
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setActive(null);
+      if (e.key === "Escape") onActive(null);
     }
     document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("keydown", onKey);
@@ -24,14 +28,14 @@ export default function CategoryNav() {
       document.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("keydown", onKey);
     };
-  }, []);
+  }, [onActive]);
 
   function toggle(cat: Category) {
-    setActive((prev) => (prev?.slug === cat.slug ? null : cat));
+    onActive(active?.slug === cat.slug ? null : cat);
   }
 
   function close() {
-    setActive(null);
+    onActive(null);
   }
 
   return (

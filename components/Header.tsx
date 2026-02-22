@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import CategoryNav from "./CategoryNav";
+import { type Category } from "@/lib/categories";
 
 const nav = [
   { label: "Огляди", href: "/oglyady" },
@@ -9,9 +13,12 @@ const nav = [
 ];
 
 export default function Header() {
+  const [active, setActive] = useState<Category | null>(null);
+
   return (
     <header className="md:sticky md:top-0 z-50 bg-white shadow-sm">
-      <div className="border-b border-gray-200">
+      {/* Logo + main nav — hidden on mobile when category submenu is open */}
+      <div className={`border-b border-gray-200 ${active ? "hidden md:block" : ""}`}>
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <Link href="/" className="flex items-center gap-2">
             <Image
@@ -36,7 +43,7 @@ export default function Header() {
           </nav>
         </div>
       </div>
-      <CategoryNav />
+      <CategoryNav active={active} onActive={setActive} />
     </header>
   );
 }
