@@ -33,7 +33,7 @@ export default function CategoryNav() {
     <div ref={navRef} className="relative z-40 bg-white border-b border-gray-100 shadow-sm">
       {/* ── Category pill buttons ── */}
       <div>
-        <div className="flex flex-wrap items-center gap-2 px-4 py-2">
+        <div className="flex flex-wrap items-center justify-center gap-2 px-4 py-2">
           {CATEGORIES.map((cat) => {
             const isActive = active?.slug === cat.slug;
             return (
