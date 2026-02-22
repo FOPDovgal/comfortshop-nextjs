@@ -1,17 +1,7 @@
 import { cookies } from "next/headers";
-import { createHash } from "crypto";
+import { validateSession } from "@/lib/admin-auth";
 import LoginForm from "./LoginForm";
 import LogoutButton from "./LogoutButton";
-
-const SALT = "comfortshop2026";
-
-function isAuthed(sessionCookie: string | undefined): boolean {
-  const adminPass = process.env.ADMIN_PASSWORD ?? "";
-  const token = createHash("sha256")
-    .update(adminPass + SALT)
-    .digest("hex");
-  return sessionCookie === token;
-}
 
 export default async function AdminLayout({
   children,
@@ -19,9 +9,10 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session")?.value;
+  const token = cookieStore.get("admin_session")?.value ?? "";
+  const authed = await validateSession(token);
 
-  if (!isAuthed(session)) {
+  if (!authed) {
     return <LoginForm />;
   }
 

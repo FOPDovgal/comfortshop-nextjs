@@ -1,35 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHash } from "crypto";
-
-const SALT = "comfortshop2026";
-
-function hashPassword(pwd: string): string {
-  return createHash("sha256")
-    .update(pwd + SALT)
-    .digest("hex");
-}
+import { loginUser, logoutSession } from "@/lib/admin-auth";
 
 export async function POST(req: NextRequest) {
-  const { password } = await req.json();
-  const adminPass = process.env.ADMIN_PASSWORD ?? "";
+  const { username, password } = await req.json();
 
-  if (!password || hashPassword(password) !== hashPassword(adminPass)) {
-    return NextResponse.json({ error: "Невірний пароль" }, { status: 401 });
+  if (!username || !password) {
+    return NextResponse.json({ error: "Вкажіть логін і пароль" }, { status: 400 });
   }
 
-  const token = hashPassword(adminPass);
+  const token = await loginUser(username, password);
+  if (!token) {
+    return NextResponse.json({ error: "Невірний логін або пароль" }, { status: 401 });
+  }
+
   const res = NextResponse.json({ ok: true });
   res.cookies.set("admin_session", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7,
     path: "/",
   });
   return res;
 }
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
+  const token = req.cookies.get("admin_session")?.value;
+  if (token) await logoutSession(token);
   const res = NextResponse.json({ ok: true });
   res.cookies.delete("admin_session");
   return res;

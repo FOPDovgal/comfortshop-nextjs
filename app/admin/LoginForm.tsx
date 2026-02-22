@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 export default function LoginForm() {
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,12 +15,13 @@ export default function LoginForm() {
     const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ username, password }),
     });
     if (res.ok) {
       window.location.reload();
     } else {
-      setError("Невірний пароль");
+      const data = await res.json();
+      setError(data.error ?? "Невірний логін або пароль");
       setLoading(false);
     }
   }
@@ -32,13 +34,23 @@ export default function LoginForm() {
         </h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
+            type="text"
+            placeholder="Логін"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
+            required
+            autoFocus
+            autoComplete="username"
+          />
+          <input
             type="password"
             placeholder="Пароль"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
             required
-            autoFocus
+            autoComplete="current-password"
           />
           {error && <p className="text-sm text-red-500">{error}</p>}
           <button

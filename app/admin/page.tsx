@@ -1,5 +1,6 @@
 import { getAllCategoryLinks } from "@/lib/affiliate";
 import LinksManager from "./LinksManager";
+import ChangePassword from "./ChangePassword";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,8 @@ export default async function AdminPage() {
       </div>
 
       <LinksManager initialLinks={links} />
+
+      <ChangePassword />
     </div>
   );
 }

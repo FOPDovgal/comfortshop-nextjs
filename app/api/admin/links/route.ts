@@ -1,25 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllCategoryLinks, upsertCategoryLink } from "@/lib/affiliate";
-import { createHash } from "crypto";
-
-const SALT = "comfortshop2026";
-
-function isAuthed(req: NextRequest): boolean {
-  const adminPass = process.env.ADMIN_PASSWORD ?? "";
-  const token = createHash("sha256")
-    .update(adminPass + SALT)
-    .digest("hex");
-  return req.cookies.get("admin_session")?.value === token;
-}
+import { validateSession } from "@/lib/admin-auth";
 
 export async function GET(req: NextRequest) {
-  if (!isAuthed(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const token = req.cookies.get("admin_session")?.value ?? "";
+  if (!(await validateSession(token))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const links = await getAllCategoryLinks();
   return NextResponse.json(links);
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAuthed(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const token = req.cookies.get("admin_session")?.value ?? "";
+  if (!(await validateSession(token))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { category, platform, url, label } = await req.json();
   if (!category || !platform || !url || !label) {
