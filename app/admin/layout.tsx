@@ -1,0 +1,51 @@
+import { cookies } from "next/headers";
+import { createHash } from "crypto";
+import LoginForm from "./LoginForm";
+
+const SALT = "comfortshop2026";
+
+function isAuthed(sessionCookie: string | undefined): boolean {
+  const adminPass = process.env.ADMIN_PASSWORD ?? "";
+  const token = createHash("sha256")
+    .update(adminPass + SALT)
+    .digest("hex");
+  return sessionCookie === token;
+}
+
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const cookieStore = await cookies();
+  const session = cookieStore.get("admin_session")?.value;
+
+  if (!isAuthed(session)) {
+    return <LoginForm />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="border-b bg-white px-6 py-4 shadow-sm">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <h1 className="text-lg font-bold text-gray-900">
+            ComfortShop — Адмінпанель
+          </h1>
+          <form action="/api/admin/login" method="POST">
+            <button
+              type="button"
+              onClick={async () => {
+                await fetch("/api/admin/login", { method: "DELETE" });
+                window.location.reload();
+              }}
+              className="text-sm text-gray-500 hover:text-gray-900"
+            >
+              Вийти
+            </button>
+          </form>
+        </div>
+      </div>
+      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+    </div>
+  );
+}

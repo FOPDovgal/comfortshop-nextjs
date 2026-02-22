@@ -2,7 +2,10 @@ import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { getAllGuides, getGuideBySlug } from "@/lib/mdx";
 import AffiliateButton from "@/components/AffiliateButton";
+import AffiliateCTABlock from "@/components/AffiliateCTABlock";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -17,7 +20,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!article) return {};
   return {
     title: article.frontmatter.seo_title ?? article.frontmatter.title,
-    description: article.frontmatter.seo_description ?? article.frontmatter.excerpt,
+    description:
+      article.frontmatter.seo_description ?? article.frontmatter.excerpt,
   };
 }
 
@@ -27,6 +31,11 @@ export default async function GuidePage({ params }: Props) {
   if (!article) notFound();
 
   const { frontmatter, content } = article;
+
+  // Article-level links (frontmatter) — shown at top as quick-access buttons
+  const topLinks = (frontmatter.affiliate_links ?? []).filter(
+    (l) => l.url !== "ВСТАВИТИ_ПОСИЛАННЯ"
+  );
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -53,19 +62,17 @@ export default async function GuidePage({ params }: Props) {
         </time>
       </div>
 
-      {/* Affiliate buttons */}
-      {frontmatter.affiliate_links && frontmatter.affiliate_links.length > 0 && (
+      {/* Quick-access buttons (top) */}
+      {topLinks.length > 0 && (
         <div className="mb-8 flex flex-wrap gap-3">
-          {frontmatter.affiliate_links
-            .filter((link) => link.url !== "ВСТАВИТИ_ПОСИЛАННЯ")
-            .map((link) => (
-              <AffiliateButton
-                key={link.platform}
-                href={link.url}
-                label={link.label}
-                platform={link.platform}
-              />
-            ))}
+          {topLinks.map((link) => (
+            <AffiliateButton
+              key={link.platform + link.url}
+              href={link.url}
+              label={link.label}
+              platform={link.platform}
+            />
+          ))}
         </div>
       )}
 
@@ -74,24 +81,8 @@ export default async function GuidePage({ params }: Props) {
         <MDXRemote source={content} />
       </article>
 
-      {/* Affiliate buttons (bottom) */}
-      {frontmatter.affiliate_links && frontmatter.affiliate_links.length > 0 && (
-        <div className="mt-10 rounded-xl border border-orange-100 bg-orange-50 p-6">
-          <p className="mb-4 font-semibold text-gray-900">Де купити:</p>
-          <div className="flex flex-wrap gap-3">
-            {frontmatter.affiliate_links
-              .filter((link) => link.url !== "ВСТАВИТИ_ПОСИЛАННЯ")
-              .map((link) => (
-                <AffiliateButton
-                  key={link.platform}
-                  href={link.url}
-                  label={link.label}
-                  platform={link.platform}
-                />
-              ))}
-          </div>
-        </div>
-      )}
+      {/* "Де купити" block — category links from DB */}
+      <AffiliateCTABlock category={frontmatter.category} />
     </div>
   );
 }
