@@ -196,6 +196,23 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
+    slug: "zootovary",
+    name: "Зоотовари",
+    icon: "🐾",
+    colorFrom: "#92400e",
+    colorTo: "#d97706",
+    bgLight: "#fef3c7",
+    subcategories: [
+      { slug: "amunitsiya-dlya-tvaryn", name: "Амуніція для тварин", icon: "🎒" },
+      { slug: "odyah-dlya-tvaryn", name: "Одяг для тварин", icon: "👕" },
+      { slug: "povidtsi-dlya-tvaryn", name: "Повідці для тварин", icon: "🦮" },
+      { slug: "nashyjnyky", name: "Нашийники", icon: "🏷️" },
+      { slug: "ihrashky-dlya-kotiv", name: "Іграшки для котів", icon: "🐱" },
+      { slug: "ihrashky-dlya-sobak", name: "Іграшки для собак", icon: "🐶" },
+      { slug: "interaktyvni-ihrashky", name: "Інтерактивні іграшки", icon: "🎯" },
+    ],
+  },
+  {
     slug: "elektrotransport",
     name: "Електротранспорт",
     icon: "🛴",
