@@ -38,7 +38,6 @@ function mdToHtml(md: string): string {
     .replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>")
     .replace(/^---$/gm, "<hr />")
     .replace(/^[-*] (.+)$/gm, "<li>$1</li>")
-    .replace(/(<li>.*<\/li>)/gs, "<ul>$1</ul>")
     .replace(/\n\n/g, "</p><p>")
     .replace(/^(?!<[h|u|b|l|p])(.+)$/gm, "<p>$1</p>")
     .replace(/<p><\/p>/g, "");
