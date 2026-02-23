@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getAllTops, getTopBySlug } from "@/lib/mdx";
+import { getAllTops, getTopBySlugFull } from "@/lib/mdx";
 import AffiliateButton from "@/components/AffiliateButton";
 import AffiliateCTABlock from "@/components/AffiliateCTABlock";
 import type { Metadata } from "next";
@@ -16,7 +16,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const article = getTopBySlug(slug);
+  const article = await getTopBySlugFull(slug);
   if (!article) return {};
   return {
     title: article.frontmatter.seo_title ?? article.frontmatter.title,
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TopPage({ params }: Props) {
   const { slug } = await params;
-  const article = getTopBySlug(slug);
+  const article = await getTopBySlugFull(slug);
   if (!article) notFound();
 
   const { frontmatter, content } = article;

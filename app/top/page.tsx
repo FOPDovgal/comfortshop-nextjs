@@ -1,14 +1,16 @@
 import Link from "next/link";
-import { getAllTops } from "@/lib/mdx";
+import { getAllTopsAsync } from "@/lib/mdx";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Топ-списки товарів",
   description: "Добірки найкращих товарів для дому та офісу: рейтинги, порівняння, рекомендації.",
 };
 
-export default function TopPage() {
-  const tops = getAllTops();
+export default async function TopPage() {
+  const tops = await getAllTopsAsync();
 
   return (
     <div>

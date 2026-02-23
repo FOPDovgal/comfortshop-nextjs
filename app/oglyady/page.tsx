@@ -1,14 +1,16 @@
 import Link from "next/link";
-import { getAllGuides } from "@/lib/mdx";
+import { getAllGuidesAsync } from "@/lib/mdx";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Огляди товарів",
   description: "Детальні огляди корисних товарів для дому та офісу з AliExpress та Temu.",
 };
 
-export default function OglyadyPage() {
-  const guides = getAllGuides();
+export default async function OglyadyPage() {
+  const guides = await getAllGuidesAsync();
 
   return (
     <div>

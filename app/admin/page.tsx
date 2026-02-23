@@ -1,5 +1,6 @@
 import { getAllCategoryLinks } from "@/lib/affiliate";
 import { getAllArticles } from "@/lib/mdx";
+import { getAllDBArticles } from "@/lib/articles";
 import AdminTabs from "./AdminTabs";
 import type { ArticleMeta } from "./ArticlesTab";
 
@@ -10,16 +11,42 @@ export default async function AdminPage() {
   try {
     links = await getAllCategoryLinks();
   } catch (e) {
-    console.error("DB error:", e);
+    console.error("DB error (links):", e);
   }
 
-  const articles: ArticleMeta[] = getAllArticles().map((a) => ({
-    slug: a.slug,
-    title: a.frontmatter.title,
-    type: a.frontmatter.type,
-    category: a.frontmatter.category,
-    date: a.frontmatter.date,
-  }));
+  // Merge DB articles (with id) + MDX file articles (without id)
+  let dbArticles: Awaited<ReturnType<typeof getAllDBArticles>> = [];
+  try {
+    dbArticles = await getAllDBArticles();
+  } catch (e) {
+    console.error("DB error (articles):", e);
+  }
+
+  const dbSlugs = new Set(dbArticles.map((a) => a.slug));
+
+  const fileArticles: ArticleMeta[] = getAllArticles()
+    .filter((a) => !dbSlugs.has(a.slug))
+    .map((a) => ({
+      slug: a.slug,
+      title: a.frontmatter.title,
+      type: a.frontmatter.type,
+      category: a.frontmatter.category,
+      date: a.frontmatter.date,
+      status: "published",
+    }));
+
+  const articles: ArticleMeta[] = [
+    ...dbArticles.map((a) => ({
+      id: a.id,
+      slug: a.slug,
+      title: a.title,
+      type: a.type,
+      category: a.category,
+      date: a.date.toString().slice(0, 10),
+      status: a.status,
+    })),
+    ...fileArticles,
+  ];
 
   return <AdminTabs links={links} articles={articles} />;
 }

@@ -1,0 +1,56 @@
+import { NextRequest, NextResponse } from "next/server";
+import { validateSession } from "@/lib/admin-auth";
+import { getAllDBArticles, createDBArticle } from "@/lib/articles";
+
+async function auth(req: NextRequest) {
+  const token = req.cookies.get("admin_session")?.value ?? "";
+  return validateSession(token);
+}
+
+export async function GET(req: NextRequest) {
+  if (!(await auth(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const articles = await getAllDBArticles();
+  return NextResponse.json(articles);
+}
+
+export async function POST(req: NextRequest) {
+  if (!(await auth(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const { slug, title, content, type, category, date } = body;
+
+  if (!slug || !title || !content || !type || !category || !date) {
+    return NextResponse.json({ error: "Обов'язкові поля: slug, title, content, type, category, date" }, { status: 400 });
+  }
+  if (!["guide", "top", "review"].includes(type)) {
+    return NextResponse.json({ error: "Невірний тип статті" }, { status: 400 });
+  }
+
+  try {
+    const id = await createDBArticle({
+      slug,
+      title,
+      excerpt: body.excerpt,
+      content,
+      type,
+      category,
+      subcategory: body.subcategory,
+      lang: body.lang ?? "uk",
+      date,
+      seo_title: body.seo_title,
+      seo_description: body.seo_description,
+      status: body.status ?? "draft",
+    });
+    return NextResponse.json({ ok: true, id }, { status: 201 });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("Duplicate entry")) {
+      return NextResponse.json({ error: "Slug вже використовується" }, { status: 409 });
+    }
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
+}

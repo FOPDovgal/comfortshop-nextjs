@@ -1,50 +1,124 @@
 "use client";
 
+import { useState } from "react";
+import type { DBArticle } from "@/lib/articles";
+import ArticleEditor from "./ArticleEditor";
+
 export interface ArticleMeta {
+  id?: number;
   slug: string;
   title: string;
   type: string;
   category: string;
   date: string;
+  status?: string;
 }
 
 const TYPE_LABEL: Record<string, { label: string; color: string }> = {
-  guide:  { label: "Огляд",     color: "bg-blue-100 text-blue-700" },
+  guide:  { label: "Огляд",      color: "bg-blue-100 text-blue-700" },
   top:    { label: "Топ-список", color: "bg-orange-100 text-orange-700" },
-  review: { label: "Рев'ю",     color: "bg-purple-100 text-purple-700" },
+  review: { label: "Рев'ю",      color: "bg-purple-100 text-purple-700" },
 };
 
-export default function ArticlesTab({ articles }: { articles: ArticleMeta[] }) {
+const STATUS_LABEL: Record<string, { label: string; color: string }> = {
+  published: { label: "Опубліковано", color: "bg-green-100 text-green-700" },
+  draft:     { label: "Чернетка",     color: "bg-gray-100 text-gray-500" },
+};
+
+type View = "list" | "editor";
+
+export default function ArticlesTab({ articles: initialArticles }: { articles: ArticleMeta[] }) {
+  const [articles, setArticles] = useState<ArticleMeta[]>(initialArticles);
+  const [view, setView] = useState<View>("list");
+  const [editingArticle, setEditingArticle] = useState<DBArticle | null>(null);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [message, setMessage] = useState("");
+
+  function showMsg(text: string) {
+    setMessage(text);
+    setTimeout(() => setMessage(""), 4000);
+  }
+
+  function startNew() {
+    setEditingArticle(null);
+    setView("editor");
+  }
+
+  async function startEdit(id: number) {
+    setLoadingId(id);
+    const res = await fetch(`/api/admin/articles/${id}`);
+    if (res.ok) {
+      const article = await res.json();
+      setEditingArticle(article);
+      setView("editor");
+    }
+    setLoadingId(null);
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm("Видалити статтю? Цю дію не можна скасувати.")) return;
+    setDeleteId(id);
+    const res = await fetch(`/api/admin/articles/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setArticles((prev) => prev.filter((a) => a.id !== id));
+      showMsg("Статтю видалено");
+    }
+    setDeleteId(null);
+  }
+
+  function handleSaved(saved: DBArticle) {
+    const meta: ArticleMeta = {
+      id: saved.id,
+      slug: saved.slug,
+      title: saved.title,
+      type: saved.type,
+      category: saved.category,
+      date: saved.date.toString().slice(0, 10),
+      status: saved.status,
+    };
+    setArticles((prev) => {
+      const exists = prev.find((a) => a.id === saved.id);
+      if (exists) return prev.map((a) => (a.id === saved.id ? meta : a));
+      return [meta, ...prev];
+    });
+    setView("list");
+    showMsg(editingArticle ? "Статтю збережено" : "Статтю створено");
+  }
+
+  // ── Editor view ──────────────────────────────────────────────────────────────
+  if (view === "editor") {
+    return (
+      <ArticleEditor
+        article={editingArticle}
+        onSaved={handleSaved}
+        onCancel={() => setView("list")}
+      />
+    );
+  }
+
+  // ── List view ────────────────────────────────────────────────────────────────
   return (
     <div>
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Статті</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            {articles.length} статей на сайті
-          </p>
+          <p className="mt-1 text-sm text-gray-500">{articles.length} статей</p>
         </div>
-        <div className="rounded-xl border border-dashed border-indigo-300 bg-indigo-50 px-5 py-3 text-sm text-indigo-700">
-          ✏️ Редактор статей — у наступному оновленні
-        </div>
+        <button
+          onClick={startNew}
+          className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+        >
+          + Нова стаття
+        </button>
       </div>
 
-      {/* Coming soon: editor features */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        {[
-          { icon: "✍️", title: "Візуальний редактор", desc: "WYSIWYG з MDX, вставка посилань і картинок" },
-          { icon: "🤖", title: "AI-генерація", desc: "Автоматичне написання статей за промтом" },
-          { icon: "🖼️", title: "Картинки з ярликами", desc: "Генерація + накладання «Хіт», «Акція» тощо" },
-        ].map((f) => (
-          <div key={f.title} className="rounded-xl border border-gray-200 bg-white p-4 opacity-60">
-            <div className="mb-2 text-2xl">{f.icon}</div>
-            <p className="text-sm font-semibold text-gray-800">{f.title}</p>
-            <p className="mt-0.5 text-xs text-gray-500">{f.desc}</p>
-          </div>
-        ))}
-      </div>
+      {message && (
+        <div className="mb-4 rounded-lg bg-green-50 px-4 py-2 text-sm text-green-700">
+          {message}
+        </div>
+      )}
 
-      {/* Articles list */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -52,6 +126,7 @@ export default function ArticlesTab({ articles }: { articles: ArticleMeta[] }) {
               <th className="px-4 py-3">Назва</th>
               <th className="px-4 py-3">Тип</th>
               <th className="px-4 py-3">Категорія</th>
+              <th className="px-4 py-3">Статус</th>
               <th className="px-4 py-3">Дата</th>
               <th className="px-4 py-3">Дії</th>
             </tr>
@@ -59,45 +134,81 @@ export default function ArticlesTab({ articles }: { articles: ArticleMeta[] }) {
           <tbody className="divide-y divide-gray-100">
             {articles.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
-                  Немає статей
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                  Немає статей. Створіть першу!
                 </td>
               </tr>
             )}
             {articles.map((a) => {
               const typeInfo = TYPE_LABEL[a.type] ?? { label: a.type, color: "bg-gray-100 text-gray-600" };
+              const statusInfo = STATUS_LABEL[a.status ?? "draft"] ?? STATUS_LABEL.draft;
               const urlPrefix = a.type === "top" ? "/top" : "/oglyady";
               return (
                 <tr key={a.slug} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    {a.title}
+                  <td className="px-4 py-3 font-medium text-gray-900 max-w-xs">
+                    <span className="line-clamp-1">{a.title}</span>
+                    <span className="mt-0.5 block font-mono text-xs text-gray-400">{a.slug}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${typeInfo.color}`}>
                       {typeInfo.label}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">
-                    {a.category}
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{a.category}</td>
+                  <td className="px-4 py-3">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo.color}`}>
+                      {statusInfo.label}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">
                     {new Date(a.date).toLocaleDateString("uk-UA", { day: "numeric", month: "short", year: "numeric" })}
                   </td>
                   <td className="px-4 py-3">
-                    <a
-                      href={`${urlPrefix}/${a.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-indigo-600 hover:underline"
-                    >
-                      Переглянути ↗
-                    </a>
+                    <div className="flex items-center gap-2">
+                      {a.id ? (
+                        <button
+                          onClick={() => startEdit(a.id!)}
+                          disabled={loadingId === a.id}
+                          className="rounded bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+                        >
+                          {loadingId === a.id ? "..." : "Редагувати"}
+                        </button>
+                      ) : (
+                        <span className="text-xs italic text-gray-400">MDX-файл</span>
+                      )}
+                      <a
+                        href={`${urlPrefix}/${a.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-100"
+                      >
+                        ↗
+                      </a>
+                      {a.id && (
+                        <button
+                          onClick={() => handleDelete(a.id!)}
+                          disabled={deleteId === a.id}
+                          className="rounded bg-red-50 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
+                        >
+                          {deleteId === a.id ? "..." : "✕"}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-6 rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
+        <p className="font-semibold">MDX-файли (тільки перегляд)</p>
+        <p className="mt-1 text-blue-600">
+          Статті позначені <span className="font-mono">MDX-файл</span> зберігаються у{" "}
+          <code className="rounded bg-blue-100 px-1">content/</code> і редагуються через Git.
+          Нові статті через адмінку зберігаються в базі даних і підтримують повне редагування.
+        </p>
       </div>
     </div>
   );

@@ -85,3 +85,80 @@ export function getTopBySlug(slug: string): Article | null {
   if (!fs.existsSync(filePath)) return null;
   return readArticle(filePath);
 }
+
+// ── Async hybrid functions: DB-first, file fallback ──────────────────────────
+
+import type { DBArticle } from "./articles";
+
+function dbToArticle(db: DBArticle): Article {
+  return {
+    slug: db.slug,
+    content: db.content,
+    frontmatter: {
+      title: db.title,
+      slug: db.slug,
+      excerpt: db.excerpt ?? "",
+      type: db.type,
+      category: db.category,
+      subcategory: db.subcategory ?? undefined,
+      lang: db.lang,
+      date: db.date.toString().slice(0, 10),
+      seo_title: db.seo_title ?? undefined,
+      seo_description: db.seo_description ?? undefined,
+    },
+  };
+}
+
+export async function getGuideBySlugFull(slug: string): Promise<Article | null> {
+  try {
+    const { getDBArticleBySlug } = await import("./articles");
+    const db = await getDBArticleBySlug(slug);
+    if (db) return dbToArticle(db);
+  } catch {}
+  return getGuideBySlug(slug);
+}
+
+export async function getTopBySlugFull(slug: string): Promise<Article | null> {
+  try {
+    const { getDBArticleBySlug } = await import("./articles");
+    const db = await getDBArticleBySlug(slug);
+    if (db) return dbToArticle(db);
+  } catch {}
+  return getTopBySlug(slug);
+}
+
+export async function getAllGuidesAsync(): Promise<Article[]> {
+  const fileArticles = getAllGuides();
+  try {
+    const { getDBArticlesByType } = await import("./articles");
+    const dbArticles = await getDBArticlesByType(["guide", "review"]);
+    const dbSlugs = new Set(dbArticles.map((a) => a.slug));
+    const merged = [
+      ...dbArticles.map(dbToArticle),
+      ...fileArticles.filter((a) => !dbSlugs.has(a.slug)),
+    ];
+    return merged.sort(
+      (a, b) => new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime()
+    );
+  } catch {
+    return fileArticles;
+  }
+}
+
+export async function getAllTopsAsync(): Promise<Article[]> {
+  const fileArticles = getAllTops();
+  try {
+    const { getDBArticlesByType } = await import("./articles");
+    const dbArticles = await getDBArticlesByType(["top"]);
+    const dbSlugs = new Set(dbArticles.map((a) => a.slug));
+    const merged = [
+      ...dbArticles.map(dbToArticle),
+      ...fileArticles.filter((a) => !dbSlugs.has(a.slug)),
+    ];
+    return merged.sort(
+      (a, b) => new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime()
+    );
+  } catch {
+    return fileArticles;
+  }
+}
