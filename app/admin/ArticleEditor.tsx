@@ -312,6 +312,23 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 focus:border-indigo-400 focus:outline-none"
             />
           </div>
+
+          {/* Bottom save bar */}
+          <div className="flex items-center justify-end gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+            <button
+              onClick={onCancel}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            >
+              Скасувати
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {saving ? "Збереження..." : isNew ? "✓ Створити статтю" : "✓ Зберегти зміни"}
+            </button>
+          </div>
         </div>
 
         {/* ── Sidebar ── */}
