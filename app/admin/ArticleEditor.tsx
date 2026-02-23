@@ -34,6 +34,7 @@ function mdToHtml(md: string): string {
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full rounded my-2" />')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 underline">$1</a>')
     .replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>")
     .replace(/^---$/gm, "<hr />")
@@ -113,6 +114,14 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
   const [error, setError] = useState("");
   const [slugManual, setSlugManual] = useState(!isNew);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Image panel state
+  const [imgPanel, setImgPanel] = useState(false);
+  const [imgAlt, setImgAlt] = useState("");
+  const [imgUrl, setImgUrl] = useState("");
+  const [imgUploading, setImgUploading] = useState(false);
+  const [imgError, setImgError] = useState("");
 
   const set = (key: keyof FormData, val: string) =>
     setForm((prev) => ({ ...prev, [key]: val }));
@@ -155,6 +164,43 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
       ta.setSelectionRange(cur, cur);
     }, 0);
   }, [form.content]);
+
+  // Image upload
+  async function uploadImage(file: File) {
+    setImgUploading(true);
+    setImgError("");
+    setImgUrl("");
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    if (res.ok) {
+      setImgUrl(data.url);
+    } else {
+      setImgError(data.error ?? "Помилка завантаження");
+    }
+    setImgUploading(false);
+  }
+
+  function insertImage() {
+    if (!imgUrl) return;
+    const md = `\n![${imgAlt}](${imgUrl})\n`;
+    const ta = textareaRef.current;
+    if (ta) {
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const newText = form.content.slice(0, start) + md + form.content.slice(end);
+      set("content", newText);
+      setTimeout(() => {
+        ta.focus();
+        ta.setSelectionRange(start + md.length, start + md.length);
+      }, 0);
+    }
+    setImgPanel(false);
+    setImgAlt("");
+    setImgUrl("");
+    setImgError("");
+  }
 
   // Save
   async function handleSave() {
@@ -269,7 +315,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                 ))}
               </div>
               {tab === "write" && (
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap items-center gap-1">
                   {TOOLBAR.map((item) => (
                     <button
                       key={item.label}
@@ -280,9 +326,98 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                       {item.label}
                     </button>
                   ))}
+                  <div className="mx-1 h-4 w-px bg-gray-300" />
+                  <button
+                    title="Вставити зображення"
+                    onClick={() => { setImgPanel((v) => !v); setImgError(""); }}
+                    className={`rounded px-2 py-1 text-xs font-semibold ${imgPanel ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-gray-200"}`}
+                  >
+                    🖼 Фото
+                  </button>
+
+                  {/* hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); e.target.value = ""; }}
+                  />
                 </div>
               )}
             </div>
+
+            {/* Image panel */}
+            {tab === "write" && imgPanel && (
+              <div className="border-b border-indigo-100 bg-indigo-50 px-4 py-3">
+                <p className="mb-2 text-xs font-semibold text-indigo-700">Вставити зображення</p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                  {/* Upload button */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-gray-500">Файл (JPG/PNG/GIF/WebP, до 5 МБ)</label>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={imgUploading}
+                      className="rounded-lg border border-dashed border-indigo-300 bg-white px-4 py-2 text-xs font-medium text-indigo-600 hover:border-indigo-500 hover:bg-indigo-50 disabled:opacity-50"
+                    >
+                      {imgUploading ? "Завантаження..." : imgUrl ? "✓ Завантажено — обрати інший" : "⬆ Обрати файл"}
+                    </button>
+                  </div>
+
+                  {/* URL input */}
+                  <div className="flex flex-1 flex-col gap-1">
+                    <label className="text-xs text-gray-500">або URL зображення</label>
+                    <input
+                      type="text"
+                      value={imgUrl}
+                      onChange={(e) => setImgUrl(e.target.value)}
+                      placeholder="https://... або /uploads/..."
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs font-mono focus:border-indigo-400 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Alt text */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-gray-500">Alt-текст</label>
+                    <input
+                      type="text"
+                      value={imgAlt}
+                      onChange={(e) => setImgAlt(e.target.value)}
+                      placeholder="опис зображення"
+                      className="rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-indigo-400 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={insertImage}
+                      disabled={!imgUrl || imgUploading}
+                      className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-40"
+                    >
+                      Вставити
+                    </button>
+                    <button
+                      onClick={() => { setImgPanel(false); setImgUrl(""); setImgAlt(""); setImgError(""); }}
+                      className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {/* Preview */}
+                {imgUrl && !imgUploading && (
+                  <div className="mt-2 flex items-center gap-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imgUrl} alt={imgAlt} className="h-16 w-16 rounded object-cover border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    <span className="font-mono text-xs text-gray-500">{imgUrl}</span>
+                  </div>
+                )}
+
+                {imgError && <p className="mt-1 text-xs text-red-600">{imgError}</p>}
+              </div>
+            )}
 
             {tab === "write" ? (
               <textarea
