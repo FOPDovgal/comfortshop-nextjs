@@ -6,11 +6,11 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import CategoryNav from "./CategoryNav";
 import { type Category } from "@/lib/categories";
+import { logoFont } from "@/lib/fonts";
 
 const nav = [
   { label: "Огляди", href: "/oglyady" },
   { label: "Топ-списки", href: "/top" },
-  { label: "Категорії", href: "/kategoriyi" },
 ];
 
 export default function Header() {
@@ -28,16 +28,26 @@ export default function Header() {
     <header className="md:sticky md:top-0 z-50 bg-white shadow-sm">
       {/* Logo + main nav — hidden on mobile when category submenu is open */}
       <div className={`border-b border-gray-200 ${active ? "hidden md:block" : ""}`}>
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2">
+          <Link href="/" className="flex items-center gap-3">
             <Image
               src="/images/logo-cropped.jpg"
               alt="ComfortShop"
-              width={40}
-              height={40}
-              className="rounded"
+              width={80}
+              height={80}
+              className="rounded-xl"
             />
-            <span className="text-lg font-bold text-gray-900">ComfortShop</span>
+            <span
+              className={`${logoFont.className} text-2xl`}
+              style={{
+                background: "linear-gradient(135deg, #059669 0%, #6366f1 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              ComfortShop
+            </span>
           </Link>
           <nav className="flex gap-6">
             {nav.map((item) => (
