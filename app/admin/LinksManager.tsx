@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { AffiliateLink } from "@/lib/affiliate";
+import { CATEGORIES } from "@/lib/categories";
 
 type Props = { initialLinks: AffiliateLink[] };
 
@@ -214,14 +215,20 @@ export default function LinksManager({ initialLinks }: Props) {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-600">
-                  Категорія (slug)
+                  Категорія
                 </label>
-                <input
+                <select
                   value={newForm.category}
                   onChange={(e) => setNewForm({ ...newForm, category: e.target.value })}
-                  placeholder="usb-gadzhety"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono"
-                />
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="">— Оберіть категорію —</option>
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat.slug} value={cat.slug}>
+                      {cat.icon} {cat.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-600">

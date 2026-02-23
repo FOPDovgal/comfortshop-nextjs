@@ -1,7 +1,7 @@
 import { getAllCategoryLinks } from "@/lib/affiliate";
-import LinksManager from "./LinksManager";
-import ChangePassword from "./ChangePassword";
-import BannerManager from "./BannerManager";
+import { getAllArticles } from "@/lib/mdx";
+import AdminTabs from "./AdminTabs";
+import type { ArticleMeta } from "./ArticlesTab";
 
 export const dynamic = "force-dynamic";
 
@@ -13,23 +13,13 @@ export default async function AdminPage() {
     console.error("DB error:", e);
   }
 
-  return (
-    <div>
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">
-          Афілійовані посилання
-        </h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Посилання на категорії в магазинах AliExpress та Temu.
-          Відображаються в блоці "Де купити" на всіх статтях відповідної категорії.
-        </p>
-      </div>
+  const articles: ArticleMeta[] = getAllArticles().map((a) => ({
+    slug: a.slug,
+    title: a.frontmatter.title,
+    type: a.frontmatter.type,
+    category: a.frontmatter.category,
+    date: a.frontmatter.date,
+  }));
 
-      <LinksManager initialLinks={links} />
-
-      <BannerManager />
-
-      <ChangePassword />
-    </div>
-  );
+  return <AdminTabs links={links} articles={articles} />;
 }
