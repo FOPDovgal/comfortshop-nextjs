@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Slide {
   id: number;
@@ -18,6 +18,8 @@ export default function BannerManager() {
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   async function load() {
     setLoading(true);
@@ -68,6 +70,10 @@ export default function BannerManager() {
   function startEdit(slide: Slide) {
     setEditId(slide.id);
     setForm({ emoji: slide.emoji, text: slide.text, order_num: slide.order_num });
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      textareaRef.current?.focus();
+    }, 50);
   }
 
   function cancelEdit() {
@@ -83,7 +89,7 @@ export default function BannerManager() {
       </p>
 
       {/* Form */}
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-5 mb-8">
+      <div ref={formRef} className="rounded-xl border border-gray-200 bg-gray-50 p-5 mb-8">
         <h3 className="font-semibold text-gray-800 mb-4">
           {editId !== null ? "✏️ Редагувати слайд" : "➕ Новий слайд"}
         </h3>
@@ -102,6 +108,7 @@ export default function BannerManager() {
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Текст слайду</label>
             <textarea
+              ref={textareaRef}
               value={form.text}
               onChange={e => setForm(f => ({ ...f, text: e.target.value }))}
               rows={2}
