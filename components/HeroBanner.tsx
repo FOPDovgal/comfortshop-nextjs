@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 export interface BannerSlide {
   id: number;
@@ -10,131 +10,147 @@ export interface BannerSlide {
 
 interface Props {
   slides: BannerSlide[];
+  title: string;
+  subtitle: string;
 }
 
-const TYPING_SPEED = 45;   // ms per character (typing)
-const ERASE_SPEED = 22;    // ms per character (erasing)
-const PAUSE_FULL = 2800;   // ms to show completed text
-const PAUSE_EMPTY = 350;   // ms pause between slides
+// Decorative background items — faded product emoji
+const BG_ITEMS = [
+  { e: "📦", x: "3%",  y: "8%",  s: "5.5rem", r: "-18deg", o: 0.07 },
+  { e: "🛍️", x: "82%", y: "5%",  s: "6.5rem", r: "22deg",  o: 0.07 },
+  { e: "🚚", x: "48%", y: "55%", s: "8rem",   r: "-8deg",  o: 0.05 },
+  { e: "⭐", x: "18%", y: "68%", s: "4rem",   r: "32deg",  o: 0.09 },
+  { e: "💎", x: "72%", y: "62%", s: "5rem",   r: "-22deg", o: 0.07 },
+  { e: "🎁", x: "28%", y: "10%", s: "5rem",   r: "12deg",  o: 0.08 },
+  { e: "💰", x: "91%", y: "45%", s: "4.5rem", r: "28deg",  o: 0.07 },
+  { e: "🔥", x: "60%", y: "12%", s: "4rem",   r: "-10deg", o: 0.06 },
+];
 
-export default function HeroBanner({ slides }: Props) {
+// Normalize CLI-inserted text emoji aliases to real emoji
+const EMOJI_ALIAS: Record<string, string> = {
+  shop: "🛍️", truck: "🚚", box: "📦", gift: "🎁", money: "💰",
+};
+
+export default function HeroBanner({ slides, title, subtitle }: Props) {
   const [slideIdx, setSlideIdx] = useState(0);
-  const [displayed, setDisplayed] = useState("");
-  const [phase, setPhase] = useState<"typing" | "paused" | "erasing" | "switching">("typing");
-
-  const current = slides[slideIdx];
+  const [animKey, setAnimKey] = useState(0);
 
   useEffect(() => {
     if (!slides.length) return;
+    const t = setInterval(() => {
+      setSlideIdx((p) => (p + 1) % slides.length);
+      setAnimKey((p) => p + 1);
+    }, 4500);
+    return () => clearInterval(t);
+  }, [slides.length]);
 
-    if (phase === "typing") {
-      if (displayed.length < current.text.length) {
-        const t = setTimeout(() => setDisplayed(current.text.slice(0, displayed.length + 1)), TYPING_SPEED);
-        return () => clearTimeout(t);
-      } else {
-        const t = setTimeout(() => setPhase("paused"), PAUSE_FULL);
-        return () => clearTimeout(t);
-      }
-    }
-
-    if (phase === "paused") {
-      setPhase("erasing");
-    }
-
-    if (phase === "erasing") {
-      if (displayed.length > 0) {
-        const t = setTimeout(() => setDisplayed(displayed.slice(0, -1)), ERASE_SPEED);
-        return () => clearTimeout(t);
-      } else {
-        setPhase("switching");
-      }
-    }
-
-    if (phase === "switching") {
-      const t = setTimeout(() => {
-        setSlideIdx((prev) => (prev + 1) % slides.length);
-        setPhase("typing");
-      }, PAUSE_EMPTY);
-      return () => clearTimeout(t);
-    }
-  }, [displayed, phase, current, slides]);
-
-  const goTo = useCallback((idx: number) => {
+  function goTo(idx: number) {
     setSlideIdx(idx);
-    setDisplayed("");
-    setPhase("typing");
-  }, []);
+    setAnimKey((p) => p + 1);
+  }
 
-  if (!slides.length) return null;
-
-  // Map text emoji keywords to actual emoji (fallback for DB records inserted via CLI)
-  const emojiMap: Record<string, string> = {
-    shop: "🛍️", truck: "🚚", box: "📦", gift: "🎁", money: "💰",
-  };
-  const emoji = emojiMap[current.emoji] ?? current.emoji;
+  const current = slides[slideIdx];
+  const emoji = current ? (EMOJI_ALIAS[current.emoji] ?? current.emoji) : "";
 
   return (
     <div
       className="relative w-full overflow-hidden rounded-2xl"
       style={{
-        minHeight: "226px",
-        background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%)",
+        minHeight: "300px",
+        background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #312e81 100%)",
       }}
     >
-      {/* Decorative bg glow */}
+      {/* ── Decorative background product emojis ── */}
+      {BG_ITEMS.map((item, i) => (
+        <div
+          key={i}
+          aria-hidden
+          className="pointer-events-none absolute select-none leading-none"
+          style={{
+            left: item.x, top: item.y,
+            fontSize: item.s, opacity: item.o,
+            transform: `rotate(${item.r})`,
+          }}
+        >
+          {item.e}
+        </div>
+      ))}
+
+      {/* ── Bottom gradient overlay (darkens for text readability) ── */}
       <div
+        aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.15) 0%, transparent 60%), " +
-            "radial-gradient(ellipse at 80% 50%, rgba(5,150,105,0.12) 0%, transparent 60%)",
+            "linear-gradient(to top, rgba(15,23,42,0.92) 0%, rgba(15,23,42,0.6) 45%, rgba(15,23,42,0.2) 100%)",
         }}
       />
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center px-6 py-10 text-center"
-           style={{ minHeight: "226px" }}>
-
-        {/* Emoji */}
-        <div
-          className="mb-4 text-5xl leading-none transition-all duration-300 md:text-6xl"
-          key={slideIdx}
-          style={{ animation: "fadeInDown 0.4s ease" }}
-        >
-          {emoji}
+      {/* ── Content ── */}
+      <div
+        className="relative z-10 flex flex-col justify-end px-5 pb-7 pt-10 md:px-10 md:pb-8"
+        style={{ minHeight: "300px" }}
+      >
+        {/* Static title + subtitle */}
+        <div className="mb-5">
+          <h1 className="text-2xl font-extrabold leading-snug text-white drop-shadow-md md:text-3xl">
+            {title}
+          </h1>
+          <p className="mt-1.5 text-sm leading-relaxed text-white/65 md:text-base">
+            {subtitle}
+          </p>
         </div>
 
-        {/* Typewriter text */}
-        <p className="max-w-2xl text-lg font-semibold leading-snug text-white md:text-xl">
-          {displayed}
-          <span
-            className="ml-0.5 inline-block w-0.5 align-middle text-indigo-300"
-            style={{ animation: "blink 1s step-end infinite" }}
+        {/* ── Animated benefit card ── */}
+        {slides.length > 0 && (
+          <div
+            key={animKey}
+            className="mb-4 flex items-center gap-3 rounded-xl px-4 py-3"
+            style={{
+              background: "rgba(99,102,241,0.22)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(129,140,248,0.3)",
+              animation: "slideUpFade 0.55s cubic-bezier(0.22,1,0.36,1) both",
+            }}
           >
-            |
-          </span>
-        </p>
+            <span className="flex-shrink-0 text-2xl leading-none">{emoji}</span>
+            <span
+              className="text-sm font-semibold text-white md:text-base"
+              style={{ animation: "revealLTR 0.65s 0.08s cubic-bezier(0.22,1,0.36,1) both" }}
+            >
+              {current.text}
+            </span>
+          </div>
+        )}
 
-        {/* Slide dots */}
-        <div className="mt-6 flex items-center gap-2">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i)}
-              aria-label={`Слайд ${i + 1}`}
-              className="h-2 rounded-full transition-all duration-300"
-              style={{
-                width: i === slideIdx ? "24px" : "8px",
-                backgroundColor: i === slideIdx ? "#818cf8" : "rgba(255,255,255,0.35)",
-              }}
-            />
-          ))}
-        </div>
+        {/* ── Slide dots ── */}
+        {slides.length > 1 && (
+          <div className="flex items-center gap-2">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                aria-label={`Слайд ${i + 1}`}
+                className="h-1.5 rounded-full transition-all duration-300"
+                style={{
+                  width: i === slideIdx ? "22px" : "6px",
+                  backgroundColor: i === slideIdx ? "#818cf8" : "rgba(255,255,255,0.28)",
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <style>{`
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes fadeInDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideUpFade {
+          from { opacity: 0; transform: translateY(22px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes revealLTR {
+          from { clip-path: inset(0 100% 0 0); }
+          to   { clip-path: inset(0 0% 0 0); }
+        }
       `}</style>
     </div>
   );

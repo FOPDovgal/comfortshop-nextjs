@@ -23,18 +23,11 @@ export default async function HomePage() {
     <div>
       {/* Hero */}
       <section className="mb-10">
-        <div className="mb-5 text-center">
-          <h1 className="mb-3 text-4xl font-bold tracking-tight text-gray-900">
-            Корисні товари для дому та офісу
-          </h1>
-          <p className="mx-auto max-w-2xl text-lg text-gray-600">
-            Чесні огляди та добірки найкращих товарів з AliExpress та Temu.
-            Обирайте розумно — купуйте вигідно.
-          </p>
-        </div>
-
-        {/* Animated banner — same height as dropdown, covered by it when open */}
-        <HeroBanner slides={bannerSlides} />
+        <HeroBanner
+          slides={bannerSlides}
+          title="Корисні товари для дому та офісу"
+          subtitle="Чесні огляди та добірки найкращих товарів з AliExpress та Temu. Обирайте розумно — купуйте вигідно."
+        />
       </section>
 
       {/* Latest articles */}
