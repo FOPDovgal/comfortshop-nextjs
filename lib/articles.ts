@@ -99,7 +99,7 @@ export async function updateDBArticle(
 ): Promise<void> {
   const { increment_revision, ...fields } = data;
   const setters: string[] = [];
-  const values: unknown[] = [];
+  const values: (string | number | null)[] = [];
 
   const allowed: Array<keyof DBArticleInput> = [
     "slug", "title", "excerpt", "content", "type", "category",
@@ -109,7 +109,7 @@ export async function updateDBArticle(
   for (const key of allowed) {
     if (key in fields) {
       setters.push(`${key} = ?`);
-      values.push((fields as Record<string, unknown>)[key] ?? null);
+      values.push(((fields as Record<string, unknown>)[key] ?? null) as string | number | null);
     }
   }
 
