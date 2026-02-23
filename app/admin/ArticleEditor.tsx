@@ -10,12 +10,13 @@ const UK_MAP: Record<string, string> = {
   ж: "zh", з: "z", и: "y", і: "i", ї: "yi", й: "y", к: "k", л: "l",
   м: "m", н: "n", о: "o", п: "p", р: "r", с: "s", т: "t", у: "u",
   ф: "f", х: "kh", ц: "ts", ч: "ch", ш: "sh", щ: "shch", ь: "", ю: "yu",
-  я: "ya", " ": "-", "'": "", "'": "", "`": "",
+  я: "ya", " ": "-",
 };
 
 function toSlug(title: string): string {
   return title
     .toLowerCase()
+    .replace(/['''`]/g, "")
     .split("")
     .map((c) => UK_MAP[c] ?? (c.match(/[a-z0-9-]/) ? c : ""))
     .join("")
