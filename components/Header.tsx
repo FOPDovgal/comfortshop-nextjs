@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import CategoryNav from "./CategoryNav";
 import { type Category } from "@/lib/categories";
 
@@ -14,6 +15,14 @@ const nav = [
 
 export default function Header() {
   const [active, setActive] = useState<Category | null>(null);
+  const pathname = usePathname();
+
+  // Reset submenu when navigating away from category pages
+  useEffect(() => {
+    if (!pathname.startsWith("/kategoriyi")) {
+      setActive(null);
+    }
+  }, [pathname]);
 
   return (
     <header className="md:sticky md:top-0 z-50 bg-white shadow-sm">

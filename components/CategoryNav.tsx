@@ -183,7 +183,6 @@ export default function CategoryNav({ active, onActive }: Props) {
               </div>
               <Link
                 href={`/kategoriyi/${active.slug}/`}
-                onClick={close}
                 className="ml-auto text-xs text-white/80"
               >
                 Всі →
@@ -199,7 +198,6 @@ export default function CategoryNav({ active, onActive }: Props) {
                 <Link
                   key={sub.slug}
                   href={`/kategoriyi/${active.slug}/${sub.slug}/`}
-                  onClick={close}
                   className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 shadow-sm active:bg-gray-50"
                 >
                   <span
