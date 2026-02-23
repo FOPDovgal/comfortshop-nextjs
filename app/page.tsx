@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getAllArticles } from "@/lib/mdx";
+import { getActiveBanners } from "@/lib/banners";
+import HeroBanner from "@/components/HeroBanner";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -8,20 +10,31 @@ export const metadata: Metadata = {
     "Огляди та топ-списки корисних товарів для дому та офісу: гаджети, техніка, аксесуари. Кращі ціни на AliExpress та Temu.",
 };
 
-export default function HomePage() {
+export default async function HomePage() {
   const articles = getAllArticles();
+  let bannerSlides: Awaited<ReturnType<typeof getActiveBanners>> = [];
+  try {
+    bannerSlides = await getActiveBanners();
+  } catch {
+    // DB unavailable — show banner without slides
+  }
 
   return (
     <div>
       {/* Hero */}
-      <section className="mb-12 text-center">
-        <h1 className="mb-4 text-4xl font-bold tracking-tight text-gray-900">
-          Корисні товари для дому та офісу
-        </h1>
-        <p className="mx-auto max-w-2xl text-lg text-gray-600">
-          Чесні огляди та добірки найкращих товарів з AliExpress та Temu.
-          Обирайте розумно — купуйте вигідно.
-        </p>
+      <section className="mb-10">
+        <div className="mb-5 text-center">
+          <h1 className="mb-3 text-4xl font-bold tracking-tight text-gray-900">
+            Корисні товари для дому та офісу
+          </h1>
+          <p className="mx-auto max-w-2xl text-lg text-gray-600">
+            Чесні огляди та добірки найкращих товарів з AliExpress та Temu.
+            Обирайте розумно — купуйте вигідно.
+          </p>
+        </div>
+
+        {/* Animated banner — same height as dropdown, covered by it when open */}
+        <HeroBanner slides={bannerSlides} />
       </section>
 
       {/* Latest articles */}
