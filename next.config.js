@@ -33,6 +33,68 @@ const nextConfig = {
         destination: "/top/top-usb-pryladiv-dlya-domu",
         permanent: true,
       },
+
+      // Category slug renames
+      {
+        source: "/kategoriyi/kuhnya",
+        destination: "/kategoriyi/kuhonni-gadzhety",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/kuhnya/",
+        destination: "/kategoriyi/kuhonni-gadzhety",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/kuhnya/:subslug*",
+        destination: "/kategoriyi/kuhonni-gadzhety/:subslug*",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/usb-gadzhety",
+        destination: "/kategoriyi/suchasni-gadzhety",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/usb-gadzhety/",
+        destination: "/kategoriyi/suchasni-gadzhety",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/usb-gadzhety/:subslug*",
+        destination: "/kategoriyi/suchasni-gadzhety/:subslug*",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/turyzm",
+        destination: "/kategoriyi/sport-ta-turyzm",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/turyzm/",
+        destination: "/kategoriyi/sport-ta-turyzm",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/turyzm/:subslug*",
+        destination: "/kategoriyi/sport-ta-turyzm/:subslug*",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/zdorovya",
+        destination: "/kategoriyi/zdorovya-ta-komfort",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/zdorovya/",
+        destination: "/kategoriyi/zdorovya-ta-komfort",
+        permanent: true,
+      },
+      {
+        source: "/kategoriyi/zdorovya/:subslug*",
+        destination: "/kategoriyi/zdorovya-ta-komfort/:subslug*",
+        permanent: true,
+      },
     ];
   },
 
