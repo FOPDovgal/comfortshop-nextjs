@@ -32,6 +32,7 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
   const [view, setView] = useState<View>("list");
   const [editingArticle, setEditingArticle] = useState<DBArticle | null>(null);
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [loadingMdxSlug, setLoadingMdxSlug] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
 
@@ -43,6 +44,17 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
   function startNew() {
     setEditingArticle(null);
     setView("editor");
+  }
+
+  async function startEditMdx(slug: string, type: string) {
+    setLoadingMdxSlug(slug);
+    const res = await fetch(`/api/admin/articles/from-mdx?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(type)}`);
+    if (res.ok) {
+      const article = await res.json();
+      setEditingArticle(article);
+      setView("editor");
+    }
+    setLoadingMdxSlug(null);
   }
 
   async function startEdit(id: number) {
@@ -174,7 +186,13 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
                           {loadingId === a.id ? "..." : "Редагувати"}
                         </button>
                       ) : (
-                        <span className="text-xs italic text-gray-400">MDX-файл</span>
+                        <button
+                          onClick={() => startEditMdx(a.slug, a.type)}
+                          disabled={loadingMdxSlug === a.slug}
+                          className="rounded bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+                        >
+                          {loadingMdxSlug === a.slug ? "..." : "Редагувати"}
+                        </button>
                       )}
                       <a
                         href={`${urlPrefix}/${a.slug}`}
@@ -203,11 +221,11 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
       </div>
 
       <div className="mt-6 rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
-        <p className="font-semibold">MDX-файли (тільки перегляд)</p>
+        <p className="font-semibold">MDX-файли та редагування</p>
         <p className="mt-1 text-blue-600">
-          Статті позначені <span className="font-mono">MDX-файл</span> зберігаються у{" "}
-          <code className="rounded bg-blue-100 px-1">content/</code> і редагуються через Git.
-          Нові статті через адмінку зберігаються в базі даних і підтримують повне редагування.
+          При редагуванні MDX-статті вміст файлу завантажується в редактор. Після збереження
+          створюється запис у базі даних, який матиме пріоритет над файлом. MDX-файл у{" "}
+          <code className="rounded bg-blue-100 px-1">content/</code> залишається як резервна копія.
         </p>
       </div>
     </div>

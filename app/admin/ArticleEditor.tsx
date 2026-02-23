@@ -88,7 +88,7 @@ interface Props {
 }
 
 export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
-  const isNew = !article;
+  const isNew = !article || article.id === 0;
   const [form, setForm] = useState<FormData>(
     article
       ? {
