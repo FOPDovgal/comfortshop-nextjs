@@ -75,11 +75,11 @@ export default function CategoryNav({ active, onActive }: Props) {
 
         {/* Dropdown panel */}
         {active && (
-          <div className="absolute left-0 right-0 top-full border-b border-gray-200 bg-white shadow-2xl">
-            <div className="flex" style={{ minHeight: "220px", maxHeight: "320px" }}>
+          <div className="absolute left-0 right-0 top-full bg-white shadow-2xl border-b border-gray-200">
+            <div className="flex gap-3 p-3" style={{ minHeight: "220px", maxHeight: "320px" }}>
               {/* Left — gradient hero */}
               <div
-                className="relative flex w-72 flex-shrink-0 flex-col justify-end overflow-hidden p-8"
+                className="relative flex w-72 flex-shrink-0 flex-col justify-end overflow-hidden rounded-2xl p-8"
                 style={{ background: `linear-gradient(145deg, ${active.colorFrom} 0%, ${active.colorTo} 100%)` }}
               >
                 <div
@@ -113,7 +113,7 @@ export default function CategoryNav({ active, onActive }: Props) {
               </div>
 
               {/* Right — subcategory grid */}
-              <div className="flex-1 overflow-y-auto p-5" style={{ backgroundColor: active.bgLight }}>
+              <div className="flex-1 overflow-y-auto rounded-2xl p-5" style={{ backgroundColor: active.bgLight }}>
                 <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
                   Підкатегорії
                 </p>
