@@ -55,7 +55,7 @@ function renderMdxImgLine(line: string): string {
 
 function convertMdSegment(md: string): string {
   return md
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    // No HTML escaping — we support inline HTML (e.g. <strong>bold</strong> in paragraphs)
     .replace(/^### (.+)$/gm, "<h3>$1</h3>")
     .replace(/^## (.+)$/gm, "<h2>$1</h2>")
     .replace(/^# (.+)$/gm, "<h1>$1</h1>")
@@ -102,15 +102,15 @@ const TOOLBAR: Array<
   { label: string; title: string; wrap: Wrap } |
   { label: string; title: string; line: string }
 > = [
-  { label: "H2",  title: "Заголовок 2", line: "## " },
-  { label: "H3",  title: "Заголовок 3", line: "### " },
-  { label: "B",   title: "Жирний",      wrap: { before: "**", after: "**", placeholder: "жирний текст" } },
-  { label: "I",   title: "Курсив",      wrap: { before: "*",  after: "*",  placeholder: "курсив" } },
-  { label: "</>", title: "Код",         wrap: { before: "`",  after: "`",  placeholder: "код" } },
-  { label: "🔗",  title: "Посилання",   wrap: { before: "[",  after: "](url)", placeholder: "текст посилання" } },
-  { label: "•",   title: "Список",      line: "- " },
-  { label: "❝",   title: "Цитата",      line: "> " },
-  { label: "—",   title: "Роздільник",  line: "---" },
+  { label: "H2",  title: "Заголовок 2", wrap: { before: "<h2>",         after: "</h2>",         placeholder: "заголовок" } },
+  { label: "H3",  title: "Заголовок 3", wrap: { before: "<h3>",         after: "</h3>",         placeholder: "заголовок" } },
+  { label: "B",   title: "Жирний",      wrap: { before: "<strong>",     after: "</strong>",     placeholder: "жирний текст" } },
+  { label: "I",   title: "Курсив",      wrap: { before: "<em>",         after: "</em>",         placeholder: "курсив" } },
+  { label: "</>", title: "Код",         wrap: { before: "<code>",       after: "</code>",       placeholder: "код" } },
+  { label: "🔗",  title: "Посилання",   wrap: { before: '<a href="URL">', after: "</a>",         placeholder: "текст посилання" } },
+  { label: "•",   title: "Список",      wrap: { before: "<li>",         after: "</li>",         placeholder: "пункт списку" } },
+  { label: "❝",   title: "Цитата",      wrap: { before: "<blockquote>", after: "</blockquote>", placeholder: "цитата" } },
+  { label: "—",   title: "Роздільник",  line: "<hr />" },
 ];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -251,8 +251,8 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
     let md: string;
 
     if (imgFloat === "none" && !imgLink) {
-      // Simple markdown image — no component needed
-      md = `\n![${imgAlt}](${imgUrl})\n`;
+      // Standard HTML img tag — valid MDX, no style attribute needed
+      md = `\n<img src="${imgUrl}"${imgAlt ? ` alt="${imgAlt}"` : ""} />\n`;
     } else {
       // Custom MDX <Img> component (handles float, width, link safely in JSX)
       const parts: string[] = [`src="${imgUrl}"`];
