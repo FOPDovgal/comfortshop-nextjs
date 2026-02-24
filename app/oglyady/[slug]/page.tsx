@@ -3,6 +3,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import { getAllGuides, getGuideBySlugFull } from "@/lib/mdx";
 import AffiliateButton from "@/components/AffiliateButton";
 import AffiliateCTABlock from "@/components/AffiliateCTABlock";
+import MdxImg from "@/components/MdxImg";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -78,7 +79,7 @@ export default async function GuidePage({ params }: Props) {
 
       {/* MDX content */}
       <article className="prose prose-gray max-w-none">
-        <MDXRemote source={content} />
+        <MDXRemote source={content} components={{ Img: MdxImg }} />
       </article>
 
       {/* "Де купити" block — category links from DB */}

@@ -25,8 +25,34 @@ function toSlug(title: string): string {
 }
 
 // ── Markdown → HTML preview ───────────────────────────────────────────────────
-// Lines that start with < are passed through as raw HTML (supports MDX HTML blocks).
-// This allows <figure style="float:..."> and similar inserted HTML to render correctly.
+// <Img> custom MDX component → rendered to plain <figure><img> for the preview.
+function renderMdxImgLine(line: string): string {
+  const get = (prop: string) => {
+    const m = line.match(new RegExp(`\\b${prop}="([^"]*)"`));
+    return m ? m[1] : "";
+  };
+  const src   = get("src");
+  const alt   = get("alt");
+  const float = get("float");
+  const width = get("width");
+  const href  = get("href");
+
+  const widthVal = width
+    ? (width.match(/^\d+$/) ? `${width}px` : width)
+    : float ? "240px" : "100%";
+
+  const figStyle =
+    float === "left"  ? `float:left;width:${widthVal};margin:0 20px 16px 0;` :
+    float === "right" ? `float:right;width:${widthVal};margin:0 0 16px 20px;` :
+                        `display:block;max-width:${widthVal};margin:0 0 16px;`;
+
+  const imgTag = `<img src="${src}" alt="${alt}" style="width:100%;border-radius:6px;display:block;margin:0;" />`;
+  const inner  = href
+    ? `<a href="${href}" target="_blank" rel="nofollow noopener noreferrer">${imgTag}</a>`
+    : imgTag;
+  return `<figure style="${figStyle}">${inner}</figure>`;
+}
+
 function convertMdSegment(md: string): string {
   return md
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -51,12 +77,13 @@ function mdToHtml(md: string): string {
   const mdBuffer: string[] = [];
 
   for (const line of md.split("\n")) {
-    if (/^[ \t]*</.test(line)) {
-      // HTML line — flush markdown buffer first, then pass HTML through raw
-      if (mdBuffer.length > 0) {
-        segments.push(convertMdSegment(mdBuffer.join("\n")));
-        mdBuffer.length = 0;
-      }
+    if (/^[ \t]*<Img\s/.test(line)) {
+      // Custom MDX <Img> component — convert to HTML for preview
+      if (mdBuffer.length > 0) { segments.push(convertMdSegment(mdBuffer.join("\n"))); mdBuffer.length = 0; }
+      segments.push(renderMdxImgLine(line));
+    } else if (/^[ \t]*</.test(line)) {
+      // Other HTML line — pass through raw
+      if (mdBuffer.length > 0) { segments.push(convertMdSegment(mdBuffer.join("\n"))); mdBuffer.length = 0; }
       segments.push(line);
     } else {
       mdBuffer.push(line);
@@ -221,30 +248,19 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
   function insertImage() {
     if (!imgUrl) return;
 
-    // Normalize width: bare number → add px suffix
-    const widthVal = imgWidth
-      ? (imgWidth.match(/^\d+$/) ? `${imgWidth}px` : imgWidth)
-      : "auto";
-
     let md: string;
 
     if (imgFloat === "none" && !imgLink) {
-      // Simple markdown syntax
+      // Simple markdown image — no component needed
       md = `\n![${imgAlt}](${imgUrl})\n`;
     } else {
-      // HTML figure with float and/or link
-      const marginStyle =
-        imgFloat === "left"  ? "margin:0 20px 16px 0;" :
-        imgFloat === "right" ? "margin:0 0 16px 20px;" : "";
-      const floatStyle = imgFloat !== "none" ? `float:${imgFloat};` : "";
-      const figStyle = `${floatStyle}width:${widthVal};${marginStyle}`;
-
-      const imgTag = `<img src="${imgUrl}" alt="${imgAlt}" style="width:100%;border-radius:6px;display:block;margin:0;" />`;
-      const inner = imgLink
-        ? `<a href="${imgLink}" target="_blank" rel="nofollow noopener noreferrer">${imgTag}</a>`
-        : imgTag;
-
-      md = `\n<figure style="${figStyle}">${inner}</figure>\n`;
+      // Custom MDX <Img> component (handles float, width, link safely in JSX)
+      const parts: string[] = [`src="${imgUrl}"`];
+      if (imgAlt)             parts.push(`alt="${imgAlt}"`);
+      if (imgFloat !== "none") parts.push(`float="${imgFloat}"`);
+      if (imgWidth)           parts.push(`width="${imgWidth}"`);
+      if (imgLink)            parts.push(`href="${imgLink}"`);
+      md = `\n<Img ${parts.join(" ")} />\n`;
     }
 
     const ta = textareaRef.current;
