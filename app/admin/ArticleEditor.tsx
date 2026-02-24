@@ -24,8 +24,10 @@ function toSlug(title: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// ── Simple markdown → HTML preview ───────────────────────────────────────────
-function mdToHtml(md: string): string {
+// ── Markdown → HTML preview ───────────────────────────────────────────────────
+// Lines that start with < are passed through as raw HTML (supports MDX HTML blocks).
+// This allows <figure style="float:..."> and similar inserted HTML to render correctly.
+function convertMdSegment(md: string): string {
   return md
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/^### (.+)$/gm, "<h3>$1</h3>")
@@ -44,23 +46,48 @@ function mdToHtml(md: string): string {
     .replace(/<p><\/p>/g, "");
 }
 
-// ── Toolbar helper ────────────────────────────────────────────────────────────
+function mdToHtml(md: string): string {
+  const segments: string[] = [];
+  const mdBuffer: string[] = [];
+
+  for (const line of md.split("\n")) {
+    if (/^[ \t]*</.test(line)) {
+      // HTML line — flush markdown buffer first, then pass HTML through raw
+      if (mdBuffer.length > 0) {
+        segments.push(convertMdSegment(mdBuffer.join("\n")));
+        mdBuffer.length = 0;
+      }
+      segments.push(line);
+    } else {
+      mdBuffer.push(line);
+    }
+  }
+  if (mdBuffer.length > 0) {
+    segments.push(convertMdSegment(mdBuffer.join("\n")));
+  }
+  return segments.join("\n");
+}
+
+// ── Toolbar ───────────────────────────────────────────────────────────────────
 type Wrap = { before: string; after: string; placeholder?: string };
 
-const TOOLBAR: Array<{ label: string; title: string; wrap: Wrap } | { label: string; title: string; line: string }> = [
-  { label: "H2", title: "Заголовок 2", line: "## " },
-  { label: "H3", title: "Заголовок 3", line: "### " },
-  { label: "B", title: "Жирний", wrap: { before: "**", after: "**", placeholder: "жирний текст" } },
-  { label: "I", title: "Курсив", wrap: { before: "*", after: "*", placeholder: "курсив" } },
-  { label: "</>", title: "Код", wrap: { before: "`", after: "`", placeholder: "код" } },
-  { label: "🔗", title: "Посилання", wrap: { before: "[", after: "](url)", placeholder: "текст посилання" } },
-  { label: "•", title: "Список", line: "- " },
-  { label: "❝", title: "Цитата", line: "> " },
-  { label: "—", title: "Роздільник", line: "---" },
+const TOOLBAR: Array<
+  { label: string; title: string; wrap: Wrap } |
+  { label: string; title: string; line: string }
+> = [
+  { label: "H2",  title: "Заголовок 2", line: "## " },
+  { label: "H3",  title: "Заголовок 3", line: "### " },
+  { label: "B",   title: "Жирний",      wrap: { before: "**", after: "**", placeholder: "жирний текст" } },
+  { label: "I",   title: "Курсив",      wrap: { before: "*",  after: "*",  placeholder: "курсив" } },
+  { label: "</>", title: "Код",         wrap: { before: "`",  after: "`",  placeholder: "код" } },
+  { label: "🔗",  title: "Посилання",   wrap: { before: "[",  after: "](url)", placeholder: "текст посилання" } },
+  { label: "•",   title: "Список",      line: "- " },
+  { label: "❝",   title: "Цитата",      line: "> " },
+  { label: "—",   title: "Роздільник",  line: "---" },
 ];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface FormData {
+interface ArticleForm {
   title: string;
   slug: string;
   type: "guide" | "top" | "review";
@@ -75,7 +102,7 @@ interface FormData {
   content: string;
 }
 
-const EMPTY: FormData = {
+const EMPTY: ArticleForm = {
   title: "", slug: "", type: "guide", status: "draft",
   date: new Date().toISOString().slice(0, 10),
   category: "", subcategory: "", lang: "uk",
@@ -90,7 +117,7 @@ interface Props {
 
 export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
   const isNew = !article || article.id === 0;
-  const [form, setForm] = useState<FormData>(
+  const [form, setForm] = useState<ArticleForm>(
     article
       ? {
           title: article.title,
@@ -117,13 +144,16 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Image panel state
-  const [imgPanel, setImgPanel] = useState(false);
-  const [imgAlt, setImgAlt] = useState("");
-  const [imgUrl, setImgUrl] = useState("");
+  const [imgPanel, setImgPanel]       = useState(false);
+  const [imgUrl, setImgUrl]           = useState("");
+  const [imgAlt, setImgAlt]           = useState("");
+  const [imgFloat, setImgFloat]       = useState<"none" | "left" | "right">("none");
+  const [imgWidth, setImgWidth]       = useState("240");
+  const [imgLink, setImgLink]         = useState("");
   const [imgUploading, setImgUploading] = useState(false);
-  const [imgError, setImgError] = useState("");
+  const [imgError, setImgError]       = useState("");
 
-  const set = (key: keyof FormData, val: string) =>
+  const set = (key: keyof ArticleForm, val: string) =>
     setForm((prev) => ({ ...prev, [key]: val }));
 
   const handleTitle = (val: string) => {
@@ -136,13 +166,10 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
     const ta = textareaRef.current;
     if (!ta) return;
     const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const text = form.content;
-    const selected = text.slice(start, end);
+    const end   = ta.selectionEnd;
+    const text  = form.content;
 
-    let insert: string;
     if ("line" in item) {
-      // Line prefix: insert at start of line
       const lineStart = text.lastIndexOf("\n", start - 1) + 1;
       const newText = text.slice(0, lineStart) + item.line + text.slice(lineStart);
       set("content", newText);
@@ -151,11 +178,11 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
         ta.setSelectionRange(lineStart + item.line.length, lineStart + item.line.length);
       }, 0);
       return;
-    } else {
-      const { before, after, placeholder = "текст" } = item.wrap;
-      insert = before + (selected || placeholder) + after;
     }
 
+    const { before, after, placeholder = "текст" } = item.wrap;
+    const selected = text.slice(start, end);
+    const insert = before + (selected || placeholder) + after;
     const newText = text.slice(0, start) + insert + text.slice(end);
     set("content", newText);
     setTimeout(() => {
@@ -182,24 +209,55 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
     setImgUploading(false);
   }
 
+  function resetImgPanel() {
+    setImgPanel(false);
+    setImgUrl("");
+    setImgAlt("");
+    setImgFloat("none");
+    setImgLink("");
+    setImgError("");
+  }
+
   function insertImage() {
     if (!imgUrl) return;
-    const md = `\n![${imgAlt}](${imgUrl})\n`;
+
+    // Normalize width: bare number → add px suffix
+    const widthVal = imgWidth
+      ? (imgWidth.match(/^\d+$/) ? `${imgWidth}px` : imgWidth)
+      : "auto";
+
+    let md: string;
+
+    if (imgFloat === "none" && !imgLink) {
+      // Simple markdown syntax
+      md = `\n![${imgAlt}](${imgUrl})\n`;
+    } else {
+      // HTML figure with float and/or link
+      const marginStyle =
+        imgFloat === "left"  ? "margin:0 20px 16px 0;" :
+        imgFloat === "right" ? "margin:0 0 16px 20px;" : "";
+      const floatStyle = imgFloat !== "none" ? `float:${imgFloat};` : "";
+      const figStyle = `${floatStyle}width:${widthVal};${marginStyle}`;
+
+      const imgTag = `<img src="${imgUrl}" alt="${imgAlt}" style="width:100%;border-radius:6px;display:block;margin:0;" />`;
+      const inner = imgLink
+        ? `<a href="${imgLink}" target="_blank" rel="nofollow noopener noreferrer">${imgTag}</a>`
+        : imgTag;
+
+      md = `\n<figure style="${figStyle}">${inner}</figure>\n`;
+    }
+
     const ta = textareaRef.current;
     if (ta) {
       const start = ta.selectionStart;
-      const end = ta.selectionEnd;
-      const newText = form.content.slice(0, start) + md + form.content.slice(end);
+      const newText = form.content.slice(0, start) + md + form.content.slice(start);
       set("content", newText);
       setTimeout(() => {
         ta.focus();
         ta.setSelectionRange(start + md.length, start + md.length);
       }, 0);
     }
-    setImgPanel(false);
-    setImgAlt("");
-    setImgUrl("");
-    setImgError("");
+    resetImgPanel();
   }
 
   // Save
@@ -211,7 +269,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
     setSaving(true);
     setError("");
 
-    const url = isNew ? "/api/admin/articles" : `/api/admin/articles/${article!.id}`;
+    const url    = isNew ? "/api/admin/articles" : `/api/admin/articles/${article!.id}`;
     const method = isNew ? "POST" : "PUT";
 
     const res = await fetch(url, {
@@ -219,9 +277,9 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
-        subcategory: form.subcategory || undefined,
-        excerpt: form.excerpt || undefined,
-        seo_title: form.seo_title || undefined,
+        subcategory:     form.subcategory     || undefined,
+        excerpt:         form.excerpt         || undefined,
+        seo_title:       form.seo_title       || undefined,
         seo_description: form.seo_description || undefined,
       }),
     });
@@ -234,14 +292,18 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
       return;
     }
 
-    // Fetch the saved article to pass back
     const articleId = isNew ? data.id : article!.id;
-    const fetchRes = await fetch(`/api/admin/articles/${articleId}`);
-    const saved = await fetchRes.json();
+    const fetchRes  = await fetch(`/api/admin/articles/${articleId}`);
+    const saved     = await fetchRes.json();
     onSaved(saved);
   }
 
   const selectedCat = CATEGORIES.find((c) => c.slug === form.category);
+
+  // Derived value for float preview width
+  const previewWidth = imgWidth
+    ? (imgWidth.match(/^\d+$/) ? `${imgWidth}px` : imgWidth)
+    : "240px";
 
   return (
     <div className="flex flex-col gap-6">
@@ -268,9 +330,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
+        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
@@ -334,8 +394,6 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                   >
                     🖼 Фото
                   </button>
-
-                  {/* hidden file input */}
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -347,12 +405,13 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
               )}
             </div>
 
-            {/* Image panel */}
+            {/* ── Image panel ── */}
             {tab === "write" && imgPanel && (
-              <div className="border-b border-indigo-100 bg-indigo-50 px-4 py-3">
-                <p className="mb-2 text-xs font-semibold text-indigo-700">Вставити зображення</p>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                  {/* Upload button */}
+              <div className="border-b border-indigo-100 bg-indigo-50 px-4 py-3 space-y-3">
+                <p className="text-xs font-semibold text-indigo-700">Вставити зображення</p>
+
+                {/* Row 1: File upload + URL */}
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-gray-500">Файл (JPG/PNG/GIF/WebP, до 5 МБ)</label>
                     <button
@@ -363,8 +422,6 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                       {imgUploading ? "Завантаження..." : imgUrl ? "✓ Завантажено — обрати інший" : "⬆ Обрати файл"}
                     </button>
                   </div>
-
-                  {/* URL input */}
                   <div className="flex flex-1 flex-col gap-1">
                     <label className="text-xs text-gray-500">або URL зображення</label>
                     <input
@@ -372,11 +429,13 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                       value={imgUrl}
                       onChange={(e) => setImgUrl(e.target.value)}
                       placeholder="https://... або /uploads/..."
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs font-mono focus:border-indigo-400 focus:outline-none"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-mono focus:border-indigo-400 focus:outline-none"
                     />
                   </div>
+                </div>
 
-                  {/* Alt text */}
+                {/* Row 2: Alt + Float + Width */}
+                <div className="flex flex-wrap items-end gap-3">
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-gray-500">Alt-текст</label>
                     <input
@@ -384,38 +443,137 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                       value={imgAlt}
                       onChange={(e) => setImgAlt(e.target.value)}
                       placeholder="опис зображення"
-                      className="rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-indigo-400 focus:outline-none"
+                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs focus:border-indigo-400 focus:outline-none"
                     />
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={insertImage}
-                      disabled={!imgUrl || imgUploading}
-                      className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-40"
-                    >
-                      Вставити
-                    </button>
-                    <button
-                      onClick={() => { setImgPanel(false); setImgUrl(""); setImgAlt(""); setImgError(""); }}
-                      className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100"
-                    >
-                      ✕
-                    </button>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-gray-500">Обтікання текстом</label>
+                    <div className="flex overflow-hidden rounded-lg border border-gray-200 bg-white text-xs font-medium">
+                      {(["none", "left", "right"] as const).map((f) => (
+                        <button
+                          key={f}
+                          onClick={() => setImgFloat(f)}
+                          className={`border-r border-gray-200 px-3 py-2 last:border-r-0 transition-colors ${
+                            imgFloat === f ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          {f === "none" ? "Без обтікання" : f === "left" ? "◧ Зліва" : "◨ Справа"}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
+                  {imgFloat !== "none" && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs text-gray-500">Ширина</label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={imgWidth}
+                          onChange={(e) => setImgWidth(e.target.value)}
+                          placeholder="240"
+                          className="w-20 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-mono focus:border-indigo-400 focus:outline-none"
+                        />
+                        <span className="text-xs text-gray-400">px / %</span>
+                      </div>
+                      <div className="flex gap-1">
+                        {["160", "240", "320", "50%"].map((w) => (
+                          <button
+                            key={w}
+                            onClick={() => setImgWidth(w)}
+                            className={`rounded px-1.5 py-0.5 text-xs ${
+                              imgWidth === w
+                                ? "bg-indigo-100 font-semibold text-indigo-700"
+                                : "border border-gray-200 bg-white text-gray-500 hover:border-indigo-300"
+                            }`}
+                          >
+                            {w}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Preview */}
-                {imgUrl && !imgUploading && (
-                  <div className="mt-2 flex items-center gap-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imgUrl} alt={imgAlt} className="h-16 w-16 rounded object-cover border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    <span className="font-mono text-xs text-gray-500">{imgUrl}</span>
+                {/* Row 3: Product link */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-gray-500">
+                    Посилання на товар (AliExpress, Rozetka тощо — необов&apos;язково)
+                  </label>
+                  <input
+                    type="text"
+                    value={imgLink}
+                    onChange={(e) => setImgLink(e.target.value)}
+                    placeholder="https://aliexpress.com/item/..."
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-mono focus:border-indigo-400 focus:outline-none"
+                  />
+                  {imgLink && (
+                    <p className="text-xs text-gray-400">
+                      rel=&quot;nofollow&quot; додається автоматично
+                    </p>
+                  )}
+                </div>
+
+                {/* Actions row */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={insertImage}
+                    disabled={!imgUrl || imgUploading}
+                    className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-40"
+                  >
+                    Вставити
+                  </button>
+                  <button
+                    onClick={resetImgPanel}
+                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                  >
+                    ✕
+                  </button>
+                  {imgUrl && !imgUploading && (
+                    <div className="ml-2 flex items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imgUrl}
+                        alt={imgAlt}
+                        className="h-10 w-10 rounded border border-gray-200 object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                      <span className="max-w-[180px] truncate font-mono text-xs text-gray-400">{imgUrl}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Float preview */}
+                {imgUrl && !imgUploading && imgFloat !== "none" && (
+                  <div className="rounded-lg border border-indigo-200 bg-white p-3">
+                    <p className="mb-2 text-xs font-semibold text-indigo-600">Попередній перегляд обтікання:</p>
+                    <div style={{ overflow: "auto" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imgUrl}
+                        alt={imgAlt}
+                        style={{
+                          float: imgFloat,
+                          width: previewWidth,
+                          margin: imgFloat === "left" ? "0 16px 8px 0" : "0 0 8px 16px",
+                          borderRadius: "6px",
+                          display: "block",
+                        }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                      <p className="text-xs leading-5 text-gray-500">
+                        Текст статті буде обтікати зображення ось так. Речення продовжуються
+                        поруч із зображенням, поки вистачає місця. Після того, як текст
+                        перевищить висоту зображення, він продовжується нижче на всю ширину
+                        колонки.
+                      </p>
+                      <div style={{ clear: "both" }} />
+                    </div>
                   </div>
                 )}
 
-                {imgError && <p className="mt-1 text-xs text-red-600">{imgError}</p>}
+                {imgError && <p className="text-xs text-red-600">{imgError}</p>}
               </div>
             )}
 
@@ -430,7 +588,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
               />
             ) : (
               <div
-                className="prose prose-sm max-w-none px-6 py-5"
+                className="prose prose-sm max-w-none overflow-auto px-6 py-5"
                 dangerouslySetInnerHTML={{ __html: mdToHtml(form.content) }}
               />
             )}
@@ -438,7 +596,9 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
 
           {/* Excerpt */}
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase tracking-wide">Анотація (excerpt)</label>
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
+              Анотація (excerpt)
+            </label>
             <textarea
               value={form.excerpt}
               onChange={(e) => set("excerpt", e.target.value)}
@@ -505,12 +665,12 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Тип</p>
             <select
               value={form.type}
-              onChange={(e) => set("type", e.target.value as FormData["type"])}
+              onChange={(e) => set("type", e.target.value as ArticleForm["type"])}
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
             >
               <option value="guide">Огляд (guide)</option>
               <option value="top">Топ-список (top)</option>
-              <option value="review">Рев'ю (review)</option>
+              <option value="review">Рев&apos;ю (review)</option>
             </select>
             <p className="mt-2 text-xs text-gray-400">
               {form.type === "top" ? "URL: /top/slug" : "URL: /oglyady/slug"}
