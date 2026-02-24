@@ -31,12 +31,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Максимальний розмір файлу — 5 МБ" }, { status: 400 });
   }
 
-  // Sanitize filename and prepend timestamp to avoid collisions
-  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+  // Sanitize filename — ASCII only to avoid URL encoding issues
+  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
   const base = file.name
     .replace(/\.[^.]+$/, "")
-    .replace(/[^a-zA-Z0-9а-яА-ЯіІїЇєЄ]/g, "_")
-    .slice(0, 40);
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "")
+    .slice(0, 40) || "img";
   const filename = `${Date.now()}_${base}.${ext}`;
 
   await mkdir(UPLOAD_DIR, { recursive: true });
