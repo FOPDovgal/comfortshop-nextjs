@@ -163,7 +163,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
       : { ...EMPTY }
   );
 
-  const [tab, setTab] = useState<"write" | "preview">("write");
+  const [tab, setTab] = useState<"write" | "split" | "preview">("split");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [slugManual, setSlugManual] = useState(!isNew);
@@ -373,31 +373,41 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
             />
           </div>
 
-          {/* Write / Preview tabs */}
+          {/* Editor tabs */}
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             {/* Tab bar + toolbar */}
-            <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2">
-              <div className="flex gap-1">
-                {(["write", "preview"] as const).map((t) => (
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2">
+              {/* Mode tabs */}
+              <div className="flex gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-0.5">
+                {([
+                  { id: "write",   label: "✏️ Редактор" },
+                  { id: "split",   label: "⬜ Поруч" },
+                  { id: "preview", label: "👁 Перегляд" },
+                ] as const).map(({ id, label }) => (
                   <button
-                    key={t}
-                    onClick={() => setTab(t)}
-                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      tab === t ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                    key={id}
+                    onClick={() => setTab(id)}
+                    className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                      tab === id ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
-                    {t === "write" ? "✏️ Редактор" : "👁 Перегляд"}
+                    {label}
                   </button>
                 ))}
               </div>
-              {tab === "write" && (
-                <div className="flex flex-wrap items-center gap-1">
+
+              {/* Toolbar — visible when editor is shown */}
+              {tab !== "preview" && (
+                <div className="flex flex-wrap items-center gap-0.5">
                   {TOOLBAR.map((item) => (
                     <button
                       key={item.label}
                       title={item.title}
-                      onClick={() => applyFormat(item)}
-                      className="rounded px-2 py-1 text-xs font-mono font-semibold text-gray-600 hover:bg-gray-200"
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // keep textarea focus & selection
+                        applyFormat(item);
+                      }}
+                      className="rounded px-2 py-1 text-xs font-mono font-semibold text-gray-600 hover:bg-gray-200 active:bg-gray-300"
                     >
                       {item.label}
                     </button>
@@ -405,7 +415,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                   <div className="mx-1 h-4 w-px bg-gray-300" />
                   <button
                     title="Вставити зображення"
-                    onClick={() => { setImgPanel((v) => !v); setImgError(""); }}
+                    onMouseDown={(e) => { e.preventDefault(); setImgPanel((v) => !v); setImgError(""); }}
                     className={`rounded px-2 py-1 text-xs font-semibold ${imgPanel ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-gray-200"}`}
                   >
                     🖼 Фото
@@ -422,7 +432,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
             </div>
 
             {/* ── Image panel ── */}
-            {tab === "write" && imgPanel && (
+            {tab !== "preview" && imgPanel && (
               <div className="border-b border-indigo-100 bg-indigo-50 px-4 py-3 space-y-3">
                 <p className="text-xs font-semibold text-indigo-700">Вставити зображення</p>
 
@@ -593,21 +603,30 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
               </div>
             )}
 
-            {tab === "write" ? (
-              <textarea
-                ref={textareaRef}
-                value={form.content}
-                onChange={(e) => set("content", e.target.value)}
-                placeholder="# Введіть текст статті у форматі Markdown / MDX..."
-                rows={28}
-                className="w-full resize-y px-4 py-4 font-mono text-sm text-gray-800 focus:outline-none"
-              />
-            ) : (
-              <div
-                className="prose prose-sm max-w-none overflow-auto px-6 py-5"
-                dangerouslySetInnerHTML={{ __html: mdToHtml(form.content) }}
-              />
-            )}
+            <div className={tab === "split" ? "flex divide-x divide-gray-200" : ""}>
+              {/* Markdown textarea — hidden in preview-only mode */}
+              {tab !== "preview" && (
+                <textarea
+                  ref={textareaRef}
+                  value={form.content}
+                  onChange={(e) => set("content", e.target.value)}
+                  placeholder="# Введіть текст статті у форматі Markdown / MDX..."
+                  rows={28}
+                  className={`${
+                    tab === "split" ? "w-1/2 resize-none" : "w-full resize-y"
+                  } px-4 py-4 font-mono text-sm text-gray-800 focus:outline-none`}
+                />
+              )}
+              {/* Live preview — hidden in write-only mode */}
+              {tab !== "write" && (
+                <div
+                  className={`${
+                    tab === "split" ? "w-1/2" : "w-full"
+                  } overflow-auto prose prose-sm max-w-none px-6 py-5`}
+                  dangerouslySetInnerHTML={{ __html: mdToHtml(form.content) }}
+                />
+              )}
+            </div>
           </div>
 
           {/* Excerpt */}

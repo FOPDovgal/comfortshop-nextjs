@@ -31,7 +31,9 @@ export default async function TopPage({ params }: Props) {
   const article = await getTopBySlugFull(slug);
   if (!article) notFound();
 
-  const { frontmatter, content } = article;
+  const { frontmatter } = article;
+  // Strip leading # H1 from content — title is displayed separately below
+  const content = article.content.replace(/^#[^\n]*\n+/, "");
 
   // Article-level links (frontmatter) — shown at top as quick-access buttons
   const topLinks = (frontmatter.affiliate_links ?? []).filter(
@@ -49,8 +51,13 @@ export default async function TopPage({ params }: Props) {
         <span>{frontmatter.title}</span>
       </nav>
 
+      {/* Title */}
+      <h1 className="mb-4 text-3xl font-bold leading-tight text-gray-900">
+        {frontmatter.title}
+      </h1>
+
       {/* Meta */}
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-6 flex items-center gap-3">
         <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
           Топ-список
         </span>
