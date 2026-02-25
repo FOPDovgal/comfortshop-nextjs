@@ -25,6 +25,13 @@ body {
   }
 }
 
+/* Desktop landscape: buttons stretch to fill each row */
+@media (orientation: landscape) {
+  .desktop-cat-btn {
+    flex-grow: 1;
+  }
+}
+
 /* Mobile landscape: 3-per-row layout + scrollable container */
 /* flex-basis overrides w-full (width:100%) in flex context — no !important conflict */
 @media (orientation: landscape) {
