@@ -25,7 +25,7 @@ export default function Header() {
   }, [pathname]);
 
   return (
-    <header className="md:sticky md:top-0 z-50 bg-white shadow-sm">
+    <header className="z-50 bg-white shadow-sm">
       {/* Logo + main nav — hidden on mobile when category submenu is open */}
       <div className={`border-b border-gray-200 ${active ? "hidden md:block" : ""}`}>
         <div className="header-inner mx-auto flex max-w-7xl items-center justify-between px-4 py-2">
