@@ -25,37 +25,21 @@ body {
   }
 }
 
-/* Mobile category buttons: always uppercase */
-.mobile-cat-btn {
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em;
-}
-
-/* Mobile portrait: each button full width */
-@media (orientation: portrait) {
-  .mobile-cat-btn {
-    width: 100% !important;
-  }
-}
-
-/* Mobile landscape: override global width, fill row width */
+/* Mobile landscape: 3-per-row layout + scrollable container */
+/* flex-basis overrides w-full (width:100%) in flex context — no !important conflict */
 @media (orientation: landscape) {
   .mobile-cat-container {
     overflow-y: auto;
     max-height: calc(100vh - 120px);
   }
-  /* Reset width that LightningCSS hoists globally from portrait block */
-  .mobile-cat-btn {
-    width: auto !important;
-  }
   .cat-btn-third {
     flex-grow: 1 !important;
     flex-shrink: 0 !important;
-    flex-basis: calc(33.333% - 0.333rem) !important;
+    flex-basis: calc(33.333% - 0.5rem) !important;
   }
   .cat-btn-half {
     flex-grow: 1 !important;
     flex-shrink: 0 !important;
-    flex-basis: calc(50% - 0.25rem) !important;
+    flex-basis: calc(50% - 0.5rem) !important;
   }
 }
