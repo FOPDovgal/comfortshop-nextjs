@@ -38,18 +38,24 @@ body {
   }
 }
 
-/* Mobile landscape: buttons fill row width.
-   flex-shrink:0 (non-default) prevents LightningCSS from minifying
-   to ambiguous single-value form "flex: calc(...)" */
+/* Mobile landscape: override global width, fill row width */
 @media (orientation: landscape) {
   .mobile-cat-container {
     overflow-y: auto;
     max-height: calc(100vh - 120px);
   }
+  /* Reset width that LightningCSS hoists globally from portrait block */
+  .mobile-cat-btn {
+    width: auto !important;
+  }
   .cat-btn-third {
-    flex: 1 0 calc(33.333% - 0.333rem) !important;
+    flex-grow: 1 !important;
+    flex-shrink: 0 !important;
+    flex-basis: calc(33.333% - 0.333rem) !important;
   }
   .cat-btn-half {
-    flex: 1 0 calc(50% - 0.25rem) !important;
+    flex-grow: 1 !important;
+    flex-shrink: 0 !important;
+    flex-basis: calc(50% - 0.25rem) !important;
   }
 }
