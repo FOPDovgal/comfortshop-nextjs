@@ -9,6 +9,16 @@ interface Props {
   onActive: (cat: Category | null) => void;
 }
 
+const CAT_COUNT = CATEGORIES.length;
+const CAT_REM = CAT_COUNT % 3;
+
+// Returns the CSS class that controls landscape width for a given index
+function landscapeClass(idx: number): string {
+  if (CAT_REM === 1 && idx >= CAT_COUNT - 4) return "cat-btn-half"; // last 4 → 2+2
+  if (CAT_REM === 2 && idx >= CAT_COUNT - 2) return "cat-btn-half"; // last 2 → half
+  return "cat-btn-third";
+}
+
 export default function CategoryNav({ active, onActive }: Props) {
   const navRef = useRef<HTMLDivElement>(null);
 
@@ -150,11 +160,11 @@ export default function CategoryNav({ active, onActive }: Props) {
         {/* State A: no category selected → show all buttons */}
         {!active && (
           <div className="flex flex-wrap justify-center gap-2 px-3 py-2.5">
-            {CATEGORIES.map((cat) => (
+            {CATEGORIES.map((cat, idx) => (
               <button
                 key={cat.slug}
                 onClick={() => toggle(cat)}
-                className="flex items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-medium uppercase tracking-wider text-gray-700 active:bg-gray-200 portrait:w-full landscape:w-[calc(33.333%-0.333rem)] landscape:shrink-0"
+                className={`flex items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-medium uppercase tracking-wider text-gray-700 active:bg-gray-200 portrait:w-full ${landscapeClass(idx)}`}
               >
                 <span className="text-base">{cat.icon}</span>
                 <span>{cat.name}</span>

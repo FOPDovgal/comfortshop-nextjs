@@ -28,7 +28,7 @@ export default function Header() {
     <header className="md:sticky md:top-0 z-50 bg-white shadow-sm">
       {/* Logo + main nav — hidden on mobile when category submenu is open */}
       <div className={`border-b border-gray-200 ${active ? "hidden md:block" : ""}`}>
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 portrait:flex-col portrait:items-center portrait:gap-1.5">
           <Link href="/" className="flex items-center gap-3">
             <Image
               src="/images/logo-cropped.jpg"
