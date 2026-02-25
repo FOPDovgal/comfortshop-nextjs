@@ -159,7 +159,7 @@ export default function CategoryNav({ active, onActive }: Props) {
       <div className="md:hidden">
         {/* State A: no category selected → show all buttons */}
         {!active && (
-          <div className="flex flex-wrap justify-center gap-2 px-3 py-2.5">
+          <div className="mobile-cat-container flex flex-wrap justify-center gap-2 px-3 py-2.5">
             {CATEGORIES.map((cat, idx) => (
               <button
                 key={cat.slug}

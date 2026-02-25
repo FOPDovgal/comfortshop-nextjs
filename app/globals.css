@@ -27,23 +27,29 @@ body {
 
 /* Mobile category buttons: always uppercase */
 .mobile-cat-btn {
-  text-transform: uppercase;
+  text-transform: uppercase !important;
   letter-spacing: 0.05em;
 }
 
 /* Mobile portrait: each button full width */
 @media (orientation: portrait) {
   .mobile-cat-btn {
-    width: 100%;
+    width: 100% !important;
   }
 }
 
-/* Mobile landscape: buttons fill row width (justify) */
+/* Mobile landscape: buttons fill row width.
+   flex-shrink:0 (non-default) prevents LightningCSS from minifying
+   to ambiguous single-value form "flex: calc(...)" */
 @media (orientation: landscape) {
+  .mobile-cat-container {
+    overflow-y: auto;
+    max-height: calc(100vh - 120px);
+  }
   .cat-btn-third {
-    flex: 1 1 calc(33.333% - 0.333rem);
+    flex: 1 0 calc(33.333% - 0.333rem) !important;
   }
   .cat-btn-half {
-    flex: 1 1 calc(50% - 0.25rem);
+    flex: 1 0 calc(50% - 0.25rem) !important;
   }
 }
