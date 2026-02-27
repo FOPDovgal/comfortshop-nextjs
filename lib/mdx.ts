@@ -145,6 +145,41 @@ export async function getAllGuidesAsync(): Promise<Article[]> {
   }
 }
 
+export async function getAllArticlesForCategory(categorySlug: string): Promise<Article[]> {
+  const mdxAll = getAllArticles().filter((a) => a.frontmatter.category === categorySlug);
+  try {
+    const { getPublishedArticlesByCategory } = await import("./articles");
+    const dbArticles = await getPublishedArticlesByCategory(categorySlug);
+    const dbSlugs = new Set(dbArticles.map((a) => a.slug));
+    return [
+      ...dbArticles.map(dbToArticle),
+      ...mdxAll.filter((a) => !dbSlugs.has(a.slug)),
+    ].sort((a, b) => new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime());
+  } catch {
+    return mdxAll;
+  }
+}
+
+export async function getAllArticlesForSubcategory(
+  categorySlug: string,
+  subcategorySlug: string
+): Promise<Article[]> {
+  const mdxAll = getAllArticles().filter(
+    (a) => a.frontmatter.category === categorySlug && a.frontmatter.subcategory === subcategorySlug
+  );
+  try {
+    const { getPublishedArticlesBySubcategory } = await import("./articles");
+    const dbArticles = await getPublishedArticlesBySubcategory(categorySlug, subcategorySlug);
+    const dbSlugs = new Set(dbArticles.map((a) => a.slug));
+    return [
+      ...dbArticles.map(dbToArticle),
+      ...mdxAll.filter((a) => !dbSlugs.has(a.slug)),
+    ].sort((a, b) => new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime());
+  } catch {
+    return mdxAll;
+  }
+}
+
 export async function getAllTopsAsync(): Promise<Article[]> {
   const fileArticles = getAllTops();
   try {

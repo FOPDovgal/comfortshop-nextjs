@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCategoryBySlug, CATEGORIES } from "@/lib/categories";
+import { getAllArticlesForSubcategory } from "@/lib/mdx";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   const params: { slug: string; subslug: string }[] = [];
@@ -28,6 +31,10 @@ export async function generateMetadata({
   };
 }
 
+function articleUrl(type: string, slug: string) {
+  return type === "top" ? `/top/${slug}` : `/oglyady/${slug}`;
+}
+
 export default async function SubcategoryPage({
   params,
 }: {
@@ -37,6 +44,8 @@ export default async function SubcategoryPage({
   const cat = getCategoryBySlug(slug);
   const sub = cat?.subcategories.find((s) => s.slug === subslug);
   if (!cat || !sub) notFound();
+
+  const articles = await getAllArticlesForSubcategory(slug, subslug);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
@@ -81,24 +90,62 @@ export default async function SubcategoryPage({
         </div>
       </div>
 
-      {/* Placeholder for future articles */}
-      <div
-        className="flex items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 py-24"
-        style={{ backgroundColor: cat.bgLight }}
-      >
-        <div className="text-center text-gray-400">
-          <p className="text-4xl mb-3">{sub.icon}</p>
-          <p className="text-lg font-semibold text-gray-500">{sub.name}</p>
-          <p className="text-sm mt-2">Статті з'являться тут найближчим часом</p>
-          <Link
-            href={`/kategoriyi/${cat.slug}/`}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
-            style={{ background: `linear-gradient(135deg, ${cat.colorFrom}, ${cat.colorTo})` }}
-          >
-            ← Назад до {cat.name}
-          </Link>
+      {/* Articles */}
+      {articles.length === 0 ? (
+        <div
+          className="flex items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 py-24"
+          style={{ backgroundColor: cat.bgLight }}
+        >
+          <div className="text-center text-gray-400">
+            <p className="text-4xl mb-3">{sub.icon}</p>
+            <p className="text-lg font-semibold text-gray-500">{sub.name}</p>
+            <p className="text-sm mt-2">Статті з'являться тут найближчим часом</p>
+            <Link
+              href={`/kategoriyi/${cat.slug}/`}
+              className="mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+              style={{ background: `linear-gradient(135deg, ${cat.colorFrom}, ${cat.colorTo})` }}
+            >
+              ← Назад до {cat.name}
+            </Link>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {articles.map((a) => (
+            <article
+              key={a.slug}
+              className="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                {a.frontmatter.type === "top" ? "Топ-підбірка" : "Огляд"}
+              </p>
+              <h3 className="mb-2 text-base font-semibold leading-snug text-gray-900 group-hover:text-orange-600">
+                <Link href={articleUrl(a.frontmatter.type, a.slug)}>
+                  {a.frontmatter.title}
+                </Link>
+              </h3>
+              {a.frontmatter.excerpt && (
+                <p className="mb-4 text-sm text-gray-500 line-clamp-2">{a.frontmatter.excerpt}</p>
+              )}
+              <div className="flex items-center justify-between">
+                <time className="text-xs text-gray-400">
+                  {new Date(a.frontmatter.date).toLocaleDateString("uk-UA", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </time>
+                <Link
+                  href={articleUrl(a.frontmatter.type, a.slug)}
+                  className="text-sm font-medium text-orange-600 hover:text-orange-700"
+                >
+                  Читати →
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </main>
   );
 }

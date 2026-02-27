@@ -141,3 +141,22 @@ export async function updateDBArticle(
 export async function deleteDBArticle(id: number): Promise<void> {
   await pool.execute("DELETE FROM articles WHERE id = ?", [id]);
 }
+
+export async function getPublishedArticlesByCategory(category: string): Promise<DBArticle[]> {
+  const [rows] = await pool.execute(
+    "SELECT * FROM articles WHERE category = ? AND status = 'published' ORDER BY date DESC",
+    [category]
+  );
+  return rows as DBArticle[];
+}
+
+export async function getPublishedArticlesBySubcategory(
+  category: string,
+  subcategory: string
+): Promise<DBArticle[]> {
+  const [rows] = await pool.execute(
+    "SELECT * FROM articles WHERE category = ? AND subcategory = ? AND status = 'published' ORDER BY date DESC",
+    [category, subcategory]
+  );
+  return rows as DBArticle[];
+}

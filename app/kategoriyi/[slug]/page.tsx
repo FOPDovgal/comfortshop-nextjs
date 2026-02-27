@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCategoryBySlug, CATEGORIES } from "@/lib/categories";
+import { getAllArticlesForCategory } from "@/lib/mdx";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   return CATEGORIES.map((c) => ({ slug: c.slug }));
@@ -21,6 +24,10 @@ export async function generateMetadata({
   };
 }
 
+function articleUrl(type: string, slug: string) {
+  return type === "top" ? `/top/${slug}` : `/oglyady/${slug}`;
+}
+
 export default async function CategoryPage({
   params,
 }: {
@@ -29,6 +36,8 @@ export default async function CategoryPage({
   const { slug } = await params;
   const cat = getCategoryBySlug(slug);
   if (!cat) notFound();
+
+  const articles = await getAllArticlesForCategory(slug);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
@@ -84,19 +93,57 @@ export default async function CategoryPage({
         ))}
       </div>
 
-      {/* Placeholder for future articles */}
+      {/* Articles */}
       <div className="mt-14">
         <h2 className="mb-5 text-xl font-bold text-gray-900">Статті та огляди</h2>
-        <div
-          className="flex items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 py-16 text-gray-400"
-          style={{ backgroundColor: cat.bgLight }}
-        >
-          <div className="text-center">
-            <p className="text-3xl mb-2">{cat.icon}</p>
-            <p className="font-medium">Статті з'являться тут</p>
-            <p className="text-sm mt-1">Скоро додамо огляди та топ-підбірки у цій категорії</p>
+        {articles.length === 0 ? (
+          <div
+            className="flex items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 py-16 text-gray-400"
+            style={{ backgroundColor: cat.bgLight }}
+          >
+            <div className="text-center">
+              <p className="text-3xl mb-2">{cat.icon}</p>
+              <p className="font-medium">Статті з'являться тут</p>
+              <p className="text-sm mt-1">Скоро додамо огляди та топ-підбірки у цій категорії</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {articles.map((a) => (
+              <article
+                key={a.slug}
+                className="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  {a.frontmatter.type === "top" ? "Топ-підбірка" : "Огляд"}
+                </p>
+                <h3 className="mb-2 text-base font-semibold leading-snug text-gray-900 group-hover:text-orange-600">
+                  <Link href={articleUrl(a.frontmatter.type, a.slug)}>
+                    {a.frontmatter.title}
+                  </Link>
+                </h3>
+                {a.frontmatter.excerpt && (
+                  <p className="mb-4 text-sm text-gray-500 line-clamp-2">{a.frontmatter.excerpt}</p>
+                )}
+                <div className="flex items-center justify-between">
+                  <time className="text-xs text-gray-400">
+                    {new Date(a.frontmatter.date).toLocaleDateString("uk-UA", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </time>
+                  <Link
+                    href={articleUrl(a.frontmatter.type, a.slug)}
+                    className="text-sm font-medium text-orange-600 hover:text-orange-700"
+                  >
+                    Читати →
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
