@@ -364,8 +364,8 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
     resetImgPanel();
   }
 
-  // Save
-  async function handleSave() {
+  // Save (з опціональним override статусу)
+  async function handleSave(statusOverride?: "draft" | "published") {
     if (!form.title || !form.slug || !form.content || !form.category || !form.date) {
       setError("Заповніть: Назва, Slug, Категорія, Дата, Контент");
       return;
@@ -381,6 +381,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
+        status:          statusOverride      ?? form.status,
         subcategory:     form.subcategory     || undefined,
         excerpt:         form.excerpt         || undefined,
         seo_title:       form.seo_title       || undefined,
@@ -758,23 +759,28 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
           {/* Status */}
           <div className="rounded-xl border border-gray-200 bg-white p-4">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Публікація</p>
-            <div className="grid grid-cols-2 gap-2">
-              {(["draft", "published"] as const).map((s) => (
+            {form.status === "draft" ? (
+              <button
+                onClick={() => handleSave("published")}
+                disabled={saving}
+                className="w-full rounded-lg bg-green-600 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+              >
+                {saving ? "Публікація..." : "✓ Опублікувати"}
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <div className="rounded-lg border border-green-300 bg-green-50 py-2 text-center text-sm font-semibold text-green-700">
+                  ✓ Опубліковано
+                </div>
                 <button
-                  key={s}
-                  onClick={() => set("status", s)}
-                  className={`rounded-lg border py-2 text-xs font-semibold transition-colors ${
-                    form.status === s
-                      ? s === "published"
-                        ? "border-green-400 bg-green-50 text-green-700"
-                        : "border-gray-400 bg-gray-100 text-gray-700"
-                      : "border-gray-200 text-gray-400 hover:border-gray-300"
-                  }`}
+                  onClick={() => handleSave("draft")}
+                  disabled={saving}
+                  className="w-full rounded-lg border border-gray-300 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                 >
-                  {s === "draft" ? "Чернетка" : "Опубліковано"}
+                  Повернути в чернетку
                 </button>
-              ))}
-            </div>
+              </div>
+            )}
             <div className="mt-3">
               <label className="mb-1 block text-xs text-gray-500">Дата публікації</label>
               <input
