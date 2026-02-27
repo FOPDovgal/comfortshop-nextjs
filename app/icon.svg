@@ -1,41 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#fb923c"/>
-      <stop offset="100%" stop-color="#dc2626"/>
-    </linearGradient>
-    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fef9c3"/>
-      <stop offset="100%" stop-color="#fcd34d"/>
-    </linearGradient>
-  </defs>
+  <!-- Dark background for max contrast -->
+  <rect width="32" height="32" rx="6.5" fill="#0f172a"/>
 
-  <!-- Rounded square background -->
-  <rect width="32" height="32" rx="6.5" fill="url(#bg)"/>
+  <!-- Chimney - white -->
+  <rect x="19.5" y="7.5" width="3" height="7" rx="0.7" fill="white" opacity="0.9"/>
 
-  <!-- Chimney -->
-  <rect x="19.5" y="7" width="3.5" height="7" rx="0.8" fill="white" opacity="0.9"/>
+  <!-- Roof - RED -->
+  <polygon points="16,3 1,17 31,17" fill="#f43f5e"/>
 
-  <!-- Roof (triangle) -->
-  <polygon points="16,4 2,17 30,17" fill="white" opacity="0.95"/>
+  <!-- Left wall - GREEN -->
+  <rect x="5" y="16" width="11" height="13" fill="#4ade80"/>
 
-  <!-- House body -->
-  <rect x="6" y="16" width="20" height="13" rx="0.5" fill="white" opacity="0.95"/>
+  <!-- Right wall - BLUE -->
+  <rect x="16" y="16" width="11" height="13" fill="#60a5fa"/>
 
-  <!-- Left window (warm glow) -->
-  <rect x="7.5" y="18.5" width="5.5" height="4.5" rx="1" fill="url(#glow)"/>
-  <!-- Cross on left window -->
-  <line x1="10.25" y1="18.5" x2="10.25" y2="23" stroke="white" stroke-width="0.6" opacity="0.6"/>
-  <line x1="7.5" y1="20.75" x2="13" y2="20.75" stroke="white" stroke-width="0.6" opacity="0.6"/>
+  <!-- Center seam line -->
+  <line x1="16" y1="16" x2="16" y2="29" stroke="#0f172a" stroke-width="0.8" opacity="0.5"/>
 
-  <!-- Right window (warm glow) -->
-  <rect x="19" y="18.5" width="5.5" height="4.5" rx="1" fill="url(#glow)"/>
-  <!-- Cross on right window -->
-  <line x1="21.75" y1="18.5" x2="21.75" y2="23" stroke="white" stroke-width="0.6" opacity="0.6"/>
-  <line x1="19" y1="20.75" x2="24.5" y2="20.75" stroke="white" stroke-width="0.6" opacity="0.6"/>
-
-  <!-- Door -->
-  <rect x="12.5" y="21" width="7" height="8" rx="1" fill="#fb923c"/>
+  <!-- Door - golden yellow -->
+  <rect x="12" y="21.5" width="8" height="7.5" rx="1.2" fill="#fbbf24"/>
   <!-- Door knob -->
-  <circle cx="18.5" cy="25" r="0.8" fill="white" opacity="0.7"/>
+  <circle cx="19" cy="25.5" r="0.7" fill="#0f172a" opacity="0.5"/>
 </svg>
