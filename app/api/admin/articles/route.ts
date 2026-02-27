@@ -44,6 +44,9 @@ export async function POST(req: NextRequest) {
       seo_title: body.seo_title,
       seo_description: body.seo_description,
       status: body.status ?? "draft",
+      affiliate_url_1: body.affiliate_url_1 || undefined,
+      affiliate_url_2: body.affiliate_url_2 || undefined,
+      affiliate_url_3: body.affiliate_url_3 || undefined,
     });
     return NextResponse.json({ ok: true, id }, { status: 201 });
   } catch (e: unknown) {

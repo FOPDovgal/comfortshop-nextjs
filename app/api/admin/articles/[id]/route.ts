@@ -37,6 +37,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     seo_title: body.seo_title,
     seo_description: body.seo_description,
     status: body.status,
+    affiliate_url_1: body.affiliate_url_1 || undefined,
+    affiliate_url_2: body.affiliate_url_2 || undefined,
+    affiliate_url_3: body.affiliate_url_3 || undefined,
     increment_revision: true,
   });
   return NextResponse.json({ ok: true });

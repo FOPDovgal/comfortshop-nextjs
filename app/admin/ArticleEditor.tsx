@@ -113,6 +113,22 @@ const TOOLBAR: Array<
   { label: "—",   title: "Роздільник",  line: "<hr />" },
 ];
 
+// ── AliExpress types ───────────────────────────────────────────────────────────
+interface AliProduct {
+  productId: string;
+  title: string;
+  imageUrl: string;
+  price: string;
+  affiliateUrl: string;
+}
+type AliStatus = "unchecked" | "checking" | "affiliate" | "non-affiliate";
+interface AliLinkState {
+  status: AliStatus;
+  affiliateUrl: string;
+  suggestions: AliProduct[];
+  finding: boolean;
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface ArticleForm {
   title: string;
@@ -127,6 +143,9 @@ interface ArticleForm {
   seo_title: string;
   seo_description: string;
   content: string;
+  affiliate_url_1: string;
+  affiliate_url_2: string;
+  affiliate_url_3: string;
 }
 
 const EMPTY: ArticleForm = {
@@ -134,6 +153,7 @@ const EMPTY: ArticleForm = {
   date: new Date().toISOString().slice(0, 10),
   category: "", subcategory: "", lang: "uk",
   excerpt: "", seo_title: "", seo_description: "", content: "",
+  affiliate_url_1: "", affiliate_url_2: "", affiliate_url_3: "",
 };
 
 interface Props {
@@ -159,6 +179,9 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
           seo_title: article.seo_title ?? "",
           seo_description: article.seo_description ?? "",
           content: article.content,
+          affiliate_url_1: article.affiliate_url_1 ?? "",
+          affiliate_url_2: article.affiliate_url_2 ?? "",
+          affiliate_url_3: article.affiliate_url_3 ?? "",
         }
       : { ...EMPTY }
   );
@@ -169,6 +192,13 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
   const [slugManual, setSlugManual] = useState(!isNew);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // AliExpress link states
+  const [aliStates, setAliStates] = useState<AliLinkState[]>([
+    { status: "unchecked", affiliateUrl: "", suggestions: [], finding: false },
+    { status: "unchecked", affiliateUrl: "", suggestions: [], finding: false },
+    { status: "unchecked", affiliateUrl: "", suggestions: [], finding: false },
+  ]);
 
   // Image panel state
   const [imgPanel, setImgPanel]       = useState(false);
@@ -236,6 +266,64 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
     setImgUploading(false);
   }
 
+  // AliExpress helpers
+  const ALI_URL_KEYS = ["affiliate_url_1", "affiliate_url_2", "affiliate_url_3"] as const;
+
+  async function checkAffiliateLink(idx: number) {
+    const urlKey = ALI_URL_KEYS[idx];
+    const url = form[urlKey];
+    if (!url) return;
+    setAliStates((prev) => prev.map((s, i) => i === idx ? { ...s, status: "checking" } : s));
+    try {
+      const res  = await fetch("/api/admin/check-affiliate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      setAliStates((prev) => prev.map((s, i) =>
+        i === idx ? { ...s, status: data.isAffiliate ? "affiliate" : "non-affiliate", affiliateUrl: data.affiliateUrl ?? "" } : s
+      ));
+    } catch {
+      setAliStates((prev) => prev.map((s, i) => i === idx ? { ...s, status: "unchecked" } : s));
+    }
+  }
+
+  async function findAlternative(idx: number) {
+    setAliStates((prev) => prev.map((s, i) => i === idx ? { ...s, finding: true, suggestions: [] } : s));
+    try {
+      const query = form.title || "USB gadget";
+      const res   = await fetch("/api/admin/find-affiliate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      const data = await res.json();
+      setAliStates((prev) => prev.map((s, i) =>
+        i === idx ? { ...s, finding: false, suggestions: data.products ?? [] } : s
+      ));
+    } catch {
+      setAliStates((prev) => prev.map((s, i) => i === idx ? { ...s, finding: false } : s));
+    }
+  }
+
+  function approveAlternative(idx: number, product: AliProduct) {
+    const urlKey = ALI_URL_KEYS[idx];
+    const oldUrl = form[urlKey];
+    // Replace old URL in content
+    if (oldUrl) {
+      set("content", form.content.split(oldUrl).join(product.affiliateUrl));
+    }
+    set(urlKey, product.affiliateUrl);
+    setAliStates((prev) => prev.map((s, i) =>
+      i === idx ? { ...s, status: "affiliate", affiliateUrl: product.affiliateUrl, suggestions: [] } : s
+    ));
+  }
+
+  function rejectAlternative(idx: number, productId: string) {
+    setAliStates((prev) => prev.map((s, i) =>
+      i === idx ? { ...s, suggestions: s.suggestions.filter((p) => p.productId !== productId) } : s
+    ));
+  }
+
   function resetImgPanel() {
     setImgPanel(false);
     setImgUrl("");
@@ -297,6 +385,9 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
         excerpt:         form.excerpt         || undefined,
         seo_title:       form.seo_title       || undefined,
         seo_description: form.seo_description || undefined,
+        affiliate_url_1: form.affiliate_url_1 || undefined,
+        affiliate_url_2: form.affiliate_url_2 || undefined,
+        affiliate_url_3: form.affiliate_url_3 || undefined,
       }),
     });
 
@@ -773,6 +864,107 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                   className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-indigo-400 focus:outline-none"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* AliExpress Links */}
+          <div className="rounded-xl border border-orange-200 bg-white p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-orange-600">🛍 AliExpress</p>
+            <div className="flex flex-col gap-4">
+              {([
+                { key: "affiliate_url_1" as const, label: "1. Головний (кнопка «Де купити»)" },
+                { key: "affiliate_url_2" as const, label: "2. В тексті (виділений блок)" },
+                { key: "affiliate_url_3" as const, label: "3. Додаткове посилання" },
+              ]).map(({ key, label }, idx) => {
+                const ali = aliStates[idx];
+                const statusColor =
+                  ali.status === "affiliate"     ? "bg-green-100 text-green-700" :
+                  ali.status === "non-affiliate" ? "bg-red-100 text-red-700" :
+                  ali.status === "checking"      ? "bg-blue-100 text-blue-600" :
+                                                   "bg-gray-100 text-gray-500";
+                const statusLabel =
+                  ali.status === "affiliate"     ? "✅ Affiliate" :
+                  ali.status === "non-affiliate" ? "⚠️ Non-affiliate" :
+                  ali.status === "checking"      ? "⏳ Перевірка..." :
+                                                   "? Не перевірено";
+                return (
+                  <div key={key} className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-gray-600">{label}</label>
+                    <input
+                      type="text"
+                      value={form[key]}
+                      onChange={(e) => {
+                        set(key, e.target.value);
+                        setAliStates((prev) => prev.map((s, i) =>
+                          i === idx ? { ...s, status: "unchecked", affiliateUrl: "", suggestions: [] } : s
+                        ));
+                      }}
+                      placeholder="https://aliexpress.com/item/..."
+                      className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-mono focus:border-orange-400 focus:outline-none"
+                    />
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}>
+                        {statusLabel}
+                      </span>
+                      {form[key] && ali.status !== "checking" && (
+                        <button
+                          onClick={() => checkAffiliateLink(idx)}
+                          className="rounded-lg border border-gray-200 px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-50"
+                        >
+                          Перевірити
+                        </button>
+                      )}
+                      {ali.status === "non-affiliate" && (
+                        <button
+                          onClick={() => findAlternative(idx)}
+                          disabled={ali.finding}
+                          className="rounded-lg bg-orange-500 px-2 py-0.5 text-xs font-medium text-white hover:bg-orange-600 disabled:opacity-50"
+                        >
+                          {ali.finding ? "Шукаємо..." : "🔍 Знайти аналог"}
+                        </button>
+                      )}
+                    </div>
+                    {/* Affiliate URL (read-only) */}
+                    {ali.status === "affiliate" && ali.affiliateUrl && (
+                      <div className="rounded bg-green-50 px-2 py-1 font-mono text-xs text-green-700 break-all">
+                        {ali.affiliateUrl}
+                      </div>
+                    )}
+                    {/* Suggestions */}
+                    {ali.suggestions.length > 0 && (
+                      <div className="flex flex-col gap-2 rounded-lg border border-orange-200 bg-orange-50 p-2">
+                        <p className="text-xs font-semibold text-orange-700">Знайдено аналоги:</p>
+                        {ali.suggestions.map((product) => (
+                          <div key={product.productId} className="flex items-start gap-2 rounded bg-white p-2 text-xs">
+                            {product.imageUrl && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={product.imageUrl} alt={product.title} className="h-10 w-10 rounded object-cover flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="line-clamp-2 text-gray-700">{product.title}</p>
+                              {product.price && <p className="text-orange-600 font-medium">{product.price}</p>}
+                            </div>
+                            <div className="flex flex-col gap-1 flex-shrink-0">
+                              <button
+                                onClick={() => approveAlternative(idx, product)}
+                                className="rounded bg-green-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-green-700"
+                              >
+                                ✓ Прийняти
+                              </button>
+                              <button
+                                onClick={() => rejectAlternative(idx, product.productId)}
+                                className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-500 hover:bg-gray-100"
+                              >
+                                ✗ Відхилити
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
