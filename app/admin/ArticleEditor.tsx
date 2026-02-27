@@ -428,7 +428,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
             Скасувати
           </button>
           <button
-            onClick={handleSave}
+            onClick={() => handleSave()}
             disabled={saving}
             className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
           >
