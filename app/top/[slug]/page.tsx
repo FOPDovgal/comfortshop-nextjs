@@ -84,9 +84,13 @@ export default async function TopPage({ params }: Props) {
         </div>
       )}
 
-      {/* MDX content */}
+      {/* Content */}
       <article className="prose prose-gray max-w-none">
-        <MDXRemote source={content} components={{ Img: MdxImg }} />
+        {frontmatter.isHtml ? (
+          <div dangerouslySetInnerHTML={{ __html: content }} />
+        ) : (
+          <MDXRemote source={content} components={{ Img: MdxImg }} />
+        )}
       </article>
 
       {/* "Де купити" block — category links from DB */}

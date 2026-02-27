@@ -15,6 +15,7 @@ export type ArticleFrontmatter = {
   date: string;
   seo_title?: string;
   seo_description?: string;
+  isHtml?: boolean;
   affiliate_links?: Array<{
     label: string;
     url: string;
@@ -105,6 +106,7 @@ function dbToArticle(db: DBArticle): Article {
       date: db.date.toString().slice(0, 10),
       seo_title: db.seo_title ?? undefined,
       seo_description: db.seo_description ?? undefined,
+      isHtml: true,
     },
   };
 }
