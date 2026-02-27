@@ -18,6 +18,13 @@ export const metadata: Metadata = {
   description:
     "Огляди та топ-списки корисних товарів для дому та офісу: гаджети, техніка, аксесуари. Кращі ціни на AliExpress та Temu.",
   metadataBase: new URL("https://comfortshop.com.ua"),
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/favicon.ico",
+  },
   openGraph: {
     siteName: "ComfortShop",
     locale: "uk_UA",
