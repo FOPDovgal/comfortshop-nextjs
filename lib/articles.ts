@@ -20,6 +20,7 @@ export interface DBArticle {
   affiliate_url_1: string | null;
   affiliate_url_2: string | null;
   affiliate_url_3: string | null;
+  image_url: string | null;
 }
 
 export type DBArticleInput = {
@@ -38,6 +39,7 @@ export type DBArticleInput = {
   affiliate_url_1?: string;
   affiliate_url_2?: string;
   affiliate_url_3?: string;
+  image_url?: string;
 };
 
 export async function getAllDBArticles(): Promise<DBArticle[]> {
@@ -81,8 +83,8 @@ export async function createDBArticle(data: DBArticleInput): Promise<number> {
     `INSERT INTO articles
       (slug, title, excerpt, content, type, category, subcategory, lang, date,
        seo_title, seo_description, status, revision_count,
-       affiliate_url_1, affiliate_url_2, affiliate_url_3)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+       affiliate_url_1, affiliate_url_2, affiliate_url_3, image_url)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
     [
       data.slug,
       data.title,
@@ -99,6 +101,7 @@ export async function createDBArticle(data: DBArticleInput): Promise<number> {
       data.affiliate_url_1 ?? null,
       data.affiliate_url_2 ?? null,
       data.affiliate_url_3 ?? null,
+      data.image_url ?? null,
     ]
   );
   return (result as { insertId: number }).insertId;
@@ -115,7 +118,7 @@ export async function updateDBArticle(
   const allowed: Array<keyof DBArticleInput> = [
     "slug", "title", "excerpt", "content", "type", "category",
     "subcategory", "lang", "date", "seo_title", "seo_description", "status",
-    "affiliate_url_1", "affiliate_url_2", "affiliate_url_3",
+    "affiliate_url_1", "affiliate_url_2", "affiliate_url_3", "image_url",
   ];
 
   for (const key of allowed) {

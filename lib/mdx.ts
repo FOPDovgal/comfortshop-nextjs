@@ -16,6 +16,7 @@ export type ArticleFrontmatter = {
   seo_title?: string;
   seo_description?: string;
   isHtml?: boolean;
+  image_url?: string;
   affiliate_links?: Array<{
     label: string;
     url: string;
@@ -107,6 +108,7 @@ function dbToArticle(db: DBArticle): Article {
       seo_title: db.seo_title ?? undefined,
       seo_description: db.seo_description ?? undefined,
       isHtml: true,
+      image_url: db.image_url ?? undefined,
     },
   };
 }

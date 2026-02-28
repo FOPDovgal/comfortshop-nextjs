@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
       seo_title: body.seo_title,
       seo_description: body.seo_description,
       status: body.status ?? "published",
+      image_url: body.image_url,
       increment_revision: true,
     });
     return NextResponse.json({
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
       seo_title: body.seo_title,
       seo_description: body.seo_description,
       status: body.status ?? "published",
+      image_url: body.image_url,
     });
     return NextResponse.json({
       ok: true,

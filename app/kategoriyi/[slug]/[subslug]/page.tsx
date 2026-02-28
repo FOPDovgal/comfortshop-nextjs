@@ -114,33 +114,51 @@ export default async function SubcategoryPage({
           {articles.map((a) => (
             <article
               key={a.slug}
-              className="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+              className="group rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md overflow-hidden"
             >
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                {a.frontmatter.type === "top" ? "Топ-підбірка" : "Огляд"}
-              </p>
-              <h3 className="mb-2 text-base font-semibold leading-snug text-gray-900 group-hover:text-orange-600">
+              {a.frontmatter.image_url ? (
                 <Link href={articleUrl(a.frontmatter.type, a.slug)}>
-                  {a.frontmatter.title}
+                  <img
+                    src={a.frontmatter.image_url}
+                    alt={a.frontmatter.title}
+                    className="w-full h-44 object-cover"
+                  />
                 </Link>
-              </h3>
-              {a.frontmatter.excerpt && (
-                <p className="mb-4 text-sm text-gray-500 line-clamp-2">{a.frontmatter.excerpt}</p>
-              )}
-              <div className="flex items-center justify-between">
-                <time className="text-xs text-gray-400">
-                  {new Date(a.frontmatter.date).toLocaleDateString("uk-UA", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </time>
-                <Link
-                  href={articleUrl(a.frontmatter.type, a.slug)}
-                  className="text-sm font-medium text-orange-600 hover:text-orange-700"
+              ) : (
+                <div
+                  className="w-full h-44 flex items-center justify-center text-5xl"
+                  style={{ background: `linear-gradient(135deg, ${cat.colorFrom}33, ${cat.colorTo}55)` }}
                 >
-                  Читати →
-                </Link>
+                  {sub.icon}
+                </div>
+              )}
+              <div className="p-5">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  {a.frontmatter.type === "top" ? "Топ-підбірка" : "Огляд"}
+                </p>
+                <h3 className="mb-2 text-base font-semibold leading-snug text-gray-900 group-hover:text-orange-600">
+                  <Link href={articleUrl(a.frontmatter.type, a.slug)}>
+                    {a.frontmatter.title}
+                  </Link>
+                </h3>
+                {a.frontmatter.excerpt && (
+                  <p className="mb-4 text-sm text-gray-500 line-clamp-2">{a.frontmatter.excerpt}</p>
+                )}
+                <div className="flex items-center justify-between">
+                  <time className="text-xs text-gray-400">
+                    {new Date(a.frontmatter.date).toLocaleDateString("uk-UA", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </time>
+                  <Link
+                    href={articleUrl(a.frontmatter.type, a.slug)}
+                    className="text-sm font-medium text-orange-600 hover:text-orange-700"
+                  >
+                    Читати →
+                  </Link>
+                </div>
               </div>
             </article>
           ))}
