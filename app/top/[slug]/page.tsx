@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { getAllTops, getTopBySlugFull } from "@/lib/mdx";
-import AffiliateButton from "@/components/AffiliateButton";
 import AffiliateCTABlock from "@/components/AffiliateCTABlock";
 import MdxImg from "@/components/MdxImg";
 import type { Metadata } from "next";
@@ -34,11 +33,6 @@ export default async function TopPage({ params }: Props) {
   const { frontmatter } = article;
   // Strip leading # H1 from content — title is displayed separately below
   const content = article.content.replace(/^#[^\n]*\n+/, "");
-
-  // Article-level links (frontmatter) — shown at top as quick-access buttons
-  const topLinks = (frontmatter.affiliate_links ?? []).filter(
-    (l) => l.url !== "ВСТАВИТИ_ПОСИЛАННЯ"
-  );
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -78,20 +72,6 @@ export default async function TopPage({ params }: Props) {
             alt={frontmatter.title}
             className="w-full max-h-80 object-cover"
           />
-        </div>
-      )}
-
-      {/* Quick-access buttons (top) */}
-      {topLinks.length > 0 && (
-        <div className="mb-8 flex flex-wrap gap-3">
-          {topLinks.map((link) => (
-            <AffiliateButton
-              key={link.platform + link.url}
-              href={link.url}
-              label={link.label}
-              platform={link.platform}
-            />
-          ))}
         </div>
       )}
 
