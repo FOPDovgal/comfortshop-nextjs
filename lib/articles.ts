@@ -9,6 +9,10 @@ export interface DBArticle {
   type: "guide" | "top" | "review";
   category: string;
   subcategory: string | null;
+  category2: string | null;
+  subcategory2: string | null;
+  category3: string | null;
+  subcategory3: string | null;
   lang: string;
   date: string;
   seo_title: string | null;
@@ -31,6 +35,10 @@ export type DBArticleInput = {
   type: "guide" | "top" | "review";
   category: string;
   subcategory?: string;
+  category2?: string;
+  subcategory2?: string;
+  category3?: string;
+  subcategory3?: string;
   lang?: string;
   date: string;
   seo_title?: string;
@@ -81,10 +89,11 @@ export async function getDBArticleById(id: number): Promise<DBArticle | null> {
 export async function createDBArticle(data: DBArticleInput): Promise<number> {
   const [result] = await pool.execute(
     `INSERT INTO articles
-      (slug, title, excerpt, content, type, category, subcategory, lang, date,
-       seo_title, seo_description, status, revision_count,
+      (slug, title, excerpt, content, type, category, subcategory,
+       category2, subcategory2, category3, subcategory3,
+       lang, date, seo_title, seo_description, status, revision_count,
        affiliate_url_1, affiliate_url_2, affiliate_url_3, image_url)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
     [
       data.slug,
       data.title,
@@ -93,6 +102,10 @@ export async function createDBArticle(data: DBArticleInput): Promise<number> {
       data.type,
       data.category,
       data.subcategory ?? null,
+      data.category2 ?? null,
+      data.subcategory2 ?? null,
+      data.category3 ?? null,
+      data.subcategory3 ?? null,
       data.lang ?? "uk",
       data.date,
       data.seo_title ?? null,
@@ -117,7 +130,8 @@ export async function updateDBArticle(
 
   const allowed: Array<keyof DBArticleInput> = [
     "slug", "title", "excerpt", "content", "type", "category",
-    "subcategory", "lang", "date", "seo_title", "seo_description", "status",
+    "subcategory", "category2", "subcategory2", "category3", "subcategory3",
+    "lang", "date", "seo_title", "seo_description", "status",
     "affiliate_url_1", "affiliate_url_2", "affiliate_url_3", "image_url",
   ];
 
@@ -147,8 +161,11 @@ export async function deleteDBArticle(id: number): Promise<void> {
 
 export async function getPublishedArticlesByCategory(category: string): Promise<DBArticle[]> {
   const [rows] = await pool.execute(
-    "SELECT * FROM articles WHERE category = ? AND status = 'published' ORDER BY date DESC",
-    [category]
+    `SELECT * FROM articles
+     WHERE (category = ? OR category2 = ? OR category3 = ?)
+       AND status = 'published'
+     ORDER BY date DESC`,
+    [category, category, category]
   );
   return rows as DBArticle[];
 }
@@ -158,8 +175,15 @@ export async function getPublishedArticlesBySubcategory(
   subcategory: string
 ): Promise<DBArticle[]> {
   const [rows] = await pool.execute(
-    "SELECT * FROM articles WHERE category = ? AND subcategory = ? AND status = 'published' ORDER BY date DESC",
-    [category, subcategory]
+    `SELECT * FROM articles
+     WHERE status = 'published'
+       AND (
+         (category = ? AND subcategory = ?) OR
+         (category2 = ? AND subcategory2 = ?) OR
+         (category3 = ? AND subcategory3 = ?)
+       )
+     ORDER BY date DESC`,
+    [category, subcategory, category, subcategory, category, subcategory]
   );
   return rows as DBArticle[];
 }

@@ -138,6 +138,10 @@ interface ArticleForm {
   date: string;
   category: string;
   subcategory: string;
+  category2: string;
+  subcategory2: string;
+  category3: string;
+  subcategory3: string;
   lang: string;
   excerpt: string;
   seo_title: string;
@@ -151,7 +155,10 @@ interface ArticleForm {
 const EMPTY: ArticleForm = {
   title: "", slug: "", type: "guide", status: "draft",
   date: new Date().toISOString().slice(0, 10),
-  category: "", subcategory: "", lang: "uk",
+  category: "", subcategory: "",
+  category2: "", subcategory2: "",
+  category3: "", subcategory3: "",
+  lang: "uk",
   excerpt: "", seo_title: "", seo_description: "", content: "",
   affiliate_url_1: "", affiliate_url_2: "", affiliate_url_3: "",
 };
@@ -174,6 +181,10 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
           date: article.date.toString().slice(0, 10),
           category: article.category,
           subcategory: article.subcategory ?? "",
+          category2: article.category2 ?? "",
+          subcategory2: article.subcategory2 ?? "",
+          category3: article.category3 ?? "",
+          subcategory3: article.subcategory3 ?? "",
           lang: article.lang,
           excerpt: article.excerpt ?? "",
           seo_title: article.seo_title ?? "",
@@ -383,6 +394,10 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
         ...form,
         status:          statusOverride      ?? form.status,
         subcategory:     form.subcategory     || undefined,
+        category2:       form.category2       || undefined,
+        subcategory2:    form.subcategory2    || undefined,
+        category3:       form.category3       || undefined,
+        subcategory3:    form.subcategory3    || undefined,
         excerpt:         form.excerpt         || undefined,
         seo_title:       form.seo_title       || undefined,
         seo_description: form.seo_description || undefined,
@@ -406,7 +421,9 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
     onSaved(saved);
   }
 
-  const selectedCat = CATEGORIES.find((c) => c.slug === form.category);
+  const selectedCat  = CATEGORIES.find((c) => c.slug === form.category);
+  const selectedCat2 = CATEGORIES.find((c) => c.slug === form.category2);
+  const selectedCat3 = CATEGORIES.find((c) => c.slug === form.category3);
 
   // Derived value for float preview width
   const previewWidth = imgWidth
@@ -809,31 +826,91 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
             </p>
           </div>
 
-          {/* Category */}
+          {/* Categories */}
           <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Категорія</p>
-            <select
-              value={form.category}
-              onChange={(e) => { set("category", e.target.value); set("subcategory", ""); }}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
-            >
-              <option value="">— Оберіть категорію —</option>
-              {CATEGORIES.map((c) => (
-                <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>
-              ))}
-            </select>
-            {selectedCat && selectedCat.subcategories.length > 0 && (
-              <select
-                value={form.subcategory}
-                onChange={(e) => set("subcategory", e.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
-              >
-                <option value="">— Підкатегорія (опційно) —</option>
-                {selectedCat.subcategories.map((s) => (
-                  <option key={s.slug} value={s.slug}>{s.icon} {s.name}</option>
-                ))}
-              </select>
-            )}
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Категорії (до 3)</p>
+            <div className="flex flex-col gap-3">
+              {/* Category 1 — обов'язкова */}
+              <div>
+                <label className="mb-1 block text-xs text-gray-500">1. Основна *</label>
+                <select
+                  value={form.category}
+                  onChange={(e) => { set("category", e.target.value); set("subcategory", ""); }}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+                >
+                  <option value="">— Оберіть категорію —</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>
+                  ))}
+                </select>
+                {selectedCat && selectedCat.subcategories.length > 0 && (
+                  <select
+                    value={form.subcategory}
+                    onChange={(e) => set("subcategory", e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+                  >
+                    <option value="">— Підкатегорія —</option>
+                    {selectedCat.subcategories.map((s) => (
+                      <option key={s.slug} value={s.slug}>{s.icon} {s.name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Category 2 — опційна */}
+              <div>
+                <label className="mb-1 block text-xs text-gray-500">2. Додаткова</label>
+                <select
+                  value={form.category2}
+                  onChange={(e) => { set("category2", e.target.value); set("subcategory2", ""); }}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+                >
+                  <option value="">— Не обрано —</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>
+                  ))}
+                </select>
+                {selectedCat2 && selectedCat2.subcategories.length > 0 && (
+                  <select
+                    value={form.subcategory2}
+                    onChange={(e) => set("subcategory2", e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+                  >
+                    <option value="">— Підкатегорія —</option>
+                    {selectedCat2.subcategories.map((s) => (
+                      <option key={s.slug} value={s.slug}>{s.icon} {s.name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Category 3 — опційна */}
+              <div>
+                <label className="mb-1 block text-xs text-gray-500">3. Додаткова</label>
+                <select
+                  value={form.category3}
+                  onChange={(e) => { set("category3", e.target.value); set("subcategory3", ""); }}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+                >
+                  <option value="">— Не обрано —</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>
+                  ))}
+                </select>
+                {selectedCat3 && selectedCat3.subcategories.length > 0 && (
+                  <select
+                    value={form.subcategory3}
+                    onChange={(e) => set("subcategory3", e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+                  >
+                    <option value="">— Підкатегорія —</option>
+                    {selectedCat3.subcategories.map((s) => (
+                      <option key={s.slug} value={s.slug}>{s.icon} {s.name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* SEO */}

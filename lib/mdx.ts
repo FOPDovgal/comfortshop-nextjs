@@ -11,6 +11,10 @@ export type ArticleFrontmatter = {
   type: "guide" | "top" | "review";
   category: string;
   subcategory?: string;
+  category2?: string;
+  subcategory2?: string;
+  category3?: string;
+  subcategory3?: string;
   lang: string;
   date: string;
   seo_title?: string;
@@ -103,6 +107,10 @@ function dbToArticle(db: DBArticle): Article {
       type: db.type,
       category: db.category,
       subcategory: db.subcategory ?? undefined,
+      category2: db.category2 ?? undefined,
+      subcategory2: db.subcategory2 ?? undefined,
+      category3: db.category3 ?? undefined,
+      subcategory3: db.subcategory3 ?? undefined,
       lang: db.lang,
       date: db.date.toString().slice(0, 10),
       seo_title: db.seo_title ?? undefined,
@@ -150,7 +158,11 @@ export async function getAllGuidesAsync(): Promise<Article[]> {
 }
 
 export async function getAllArticlesForCategory(categorySlug: string): Promise<Article[]> {
-  const mdxAll = getAllArticles().filter((a) => a.frontmatter.category === categorySlug);
+  const mdxAll = getAllArticles().filter((a) =>
+    a.frontmatter.category === categorySlug ||
+    a.frontmatter.category2 === categorySlug ||
+    a.frontmatter.category3 === categorySlug
+  );
   try {
     const { getPublishedArticlesByCategory } = await import("./articles");
     const dbArticles = await getPublishedArticlesByCategory(categorySlug);
@@ -169,7 +181,10 @@ export async function getAllArticlesForSubcategory(
   subcategorySlug: string
 ): Promise<Article[]> {
   const mdxAll = getAllArticles().filter(
-    (a) => a.frontmatter.category === categorySlug && a.frontmatter.subcategory === subcategorySlug
+    (a) =>
+      (a.frontmatter.category === categorySlug && a.frontmatter.subcategory === subcategorySlug) ||
+      (a.frontmatter.category2 === categorySlug && a.frontmatter.subcategory2 === subcategorySlug) ||
+      (a.frontmatter.category3 === categorySlug && a.frontmatter.subcategory3 === subcategorySlug)
   );
   try {
     const { getPublishedArticlesBySubcategory } = await import("./articles");

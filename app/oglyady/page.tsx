@@ -19,28 +19,41 @@ export default async function OglyadyPage() {
         {guides.map((article) => (
           <article
             key={article.slug}
-            className="rounded-xl border border-gray-200 p-6 transition-shadow hover:shadow-md"
+            className="overflow-hidden rounded-xl border border-gray-200 transition-shadow hover:shadow-md"
           >
-            <h2 className="mb-2 text-lg font-semibold text-gray-900">
-              <Link href={`/oglyady/${article.slug}`} className="hover:text-orange-600">
-                {article.frontmatter.title}
+            {/* Cover image */}
+            {article.frontmatter.image_url && (
+              <Link href={`/oglyady/${article.slug}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={article.frontmatter.image_url}
+                  alt={article.frontmatter.title}
+                  className="w-full h-44 object-cover"
+                />
               </Link>
-            </h2>
-            <p className="mb-4 text-sm text-gray-600">{article.frontmatter.excerpt}</p>
-            <div className="flex items-center justify-between">
-              <time className="text-xs text-gray-400">
-                {new Date(article.frontmatter.date).toLocaleDateString("uk-UA", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </time>
-              <Link
-                href={`/oglyady/${article.slug}`}
-                className="text-sm font-medium text-orange-600 hover:text-orange-700"
-              >
-                Читати →
-              </Link>
+            )}
+            <div className="p-5">
+              <h2 className="mb-2 text-lg font-semibold text-gray-900">
+                <Link href={`/oglyady/${article.slug}`} className="hover:text-orange-600">
+                  {article.frontmatter.title}
+                </Link>
+              </h2>
+              <p className="mb-4 text-sm text-gray-600">{article.frontmatter.excerpt}</p>
+              <div className="flex items-center justify-between">
+                <time className="text-xs text-gray-400">
+                  {new Date(article.frontmatter.date).toLocaleDateString("uk-UA", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </time>
+                <Link
+                  href={`/oglyady/${article.slug}`}
+                  className="text-sm font-medium text-orange-600 hover:text-orange-700"
+                >
+                  Читати →
+                </Link>
+              </div>
             </div>
           </article>
         ))}
