@@ -34,6 +34,10 @@ export async function GET(req: NextRequest) {
     type: frontmatter.type,
     category: frontmatter.category,
     subcategory: frontmatter.subcategory ?? null,
+    category2: frontmatter.category2 ?? null,
+    subcategory2: frontmatter.subcategory2 ?? null,
+    category3: frontmatter.category3 ?? null,
+    subcategory3: frontmatter.subcategory3 ?? null,
     lang: frontmatter.lang ?? "uk",
     date: frontmatter.date,
     seo_title: frontmatter.seo_title ?? null,
@@ -42,5 +46,9 @@ export async function GET(req: NextRequest) {
     revision_count: 0,
     created_at: now,
     updated_at: now,
+    affiliate_url_1: null,
+    affiliate_url_2: null,
+    affiliate_url_3: null,
+    image_url: frontmatter.image_url ?? null,
   });
 }
