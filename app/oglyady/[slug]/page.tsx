@@ -70,6 +70,17 @@ export default async function GuidePage({ params }: Props) {
         </time>
       </div>
 
+      {/* Cover image */}
+      {frontmatter.image_url && (
+        <div className="mb-8 overflow-hidden rounded-2xl shadow-sm">
+          <img
+            src={frontmatter.image_url}
+            alt={frontmatter.title}
+            className="w-full max-h-80 object-cover"
+          />
+        </div>
+      )}
+
       {/* Quick-access buttons (top) */}
       {topLinks.length > 0 && (
         <div className="mb-8 flex flex-wrap gap-3">
