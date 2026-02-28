@@ -51,6 +51,9 @@ export async function POST(req: NextRequest) {
       seo_title: body.seo_title,
       seo_description: body.seo_description,
       status: body.status ?? "published",
+      affiliate_url_1: body.affiliate_url_1 || undefined,
+      affiliate_url_2: body.affiliate_url_2 || undefined,
+      affiliate_url_3: body.affiliate_url_3 || undefined,
       image_url: body.image_url,
       increment_revision: true,
     });
@@ -72,11 +75,18 @@ export async function POST(req: NextRequest) {
       type,
       category,
       subcategory: body.subcategory,
+      category2: body.category2 || undefined,
+      subcategory2: body.subcategory2 || undefined,
+      category3: body.category3 || undefined,
+      subcategory3: body.subcategory3 || undefined,
       lang: body.lang ?? "uk",
       date,
       seo_title: body.seo_title,
       seo_description: body.seo_description,
       status: body.status ?? "published",
+      affiliate_url_1: body.affiliate_url_1 || undefined,
+      affiliate_url_2: body.affiliate_url_2 || undefined,
+      affiliate_url_3: body.affiliate_url_3 || undefined,
       image_url: body.image_url,
     });
     return NextResponse.json({

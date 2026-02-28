@@ -2,9 +2,10 @@ import { getCategoryLinks } from "@/lib/affiliate";
 
 type Props = {
   category: string;
+  aliUrl?: string; // article-specific AliExpress link; overrides category-level link
 };
 
-export default async function AffiliateCTABlock({ category }: Props) {
+export default async function AffiliateCTABlock({ category, aliUrl }: Props) {
   let links: Awaited<ReturnType<typeof getCategoryLinks>> = [];
   try {
     links = await getCategoryLinks(category);
@@ -12,7 +13,10 @@ export default async function AffiliateCTABlock({ category }: Props) {
     // DB unavailable — show placeholder
   }
 
-  const aliLink = links.find((l) => l.platform === "aliexpress");
+  // Article-specific link takes priority over category-level link
+  const aliLink = aliUrl
+    ? { url: aliUrl, platform: "aliexpress" }
+    : links.find((l) => l.platform === "aliexpress");
   const temuLink = links.find((l) => l.platform === "temu");
 
   return (

@@ -104,8 +104,8 @@ export default async function TopPage({ params }: Props) {
         )}
       </article>
 
-      {/* "Де купити" block — category links from DB */}
-      <AffiliateCTABlock category={frontmatter.category} />
+      {/* "Де купити" block — article-specific link takes priority over category link */}
+      <AffiliateCTABlock category={frontmatter.category} aliUrl={frontmatter.affiliate_url_1} />
     </div>
   );
 }

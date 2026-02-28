@@ -21,6 +21,8 @@ export type ArticleFrontmatter = {
   seo_description?: string;
   isHtml?: boolean;
   image_url?: string;
+  // article-specific affiliate URLs (from DB fields or MDX frontmatter)
+  affiliate_url_1?: string;
   affiliate_links?: Array<{
     label: string;
     url: string;
@@ -96,7 +98,29 @@ export function getTopBySlug(slug: string): Article | null {
 
 import type { DBArticle } from "./articles";
 
+function urlPlatform(url: string): "aliexpress" | "temu" | "other" {
+  if (url.includes("aliexpress") || url.includes("s.click.aliexpress")) return "aliexpress";
+  if (url.includes("temu.com")) return "temu";
+  return "other";
+}
+
 function dbToArticle(db: DBArticle): Article {
+  // Build affiliate_links from DB fields for top quick-access buttons
+  const affiliate_links: ArticleFrontmatter["affiliate_links"] = [];
+  if (db.affiliate_url_1) {
+    const p = urlPlatform(db.affiliate_url_1);
+    const label = p === "temu" ? "Купити на Temu" : p === "aliexpress" ? "Купити на AliExpress" : "Купити";
+    affiliate_links.push({ label, url: db.affiliate_url_1, platform: p });
+  }
+  if (db.affiliate_url_2) {
+    const p = urlPlatform(db.affiliate_url_2);
+    affiliate_links.push({ label: "Також на AliExpress", url: db.affiliate_url_2, platform: p });
+  }
+  if (db.affiliate_url_3) {
+    const p = urlPlatform(db.affiliate_url_3);
+    affiliate_links.push({ label: "Ще варіант", url: db.affiliate_url_3, platform: p });
+  }
+
   return {
     slug: db.slug,
     content: db.content,
@@ -117,6 +141,8 @@ function dbToArticle(db: DBArticle): Article {
       seo_description: db.seo_description ?? undefined,
       isHtml: true,
       image_url: db.image_url ?? undefined,
+      affiliate_url_1: db.affiliate_url_1 ?? undefined,
+      affiliate_links: affiliate_links.length > 0 ? affiliate_links : undefined,
     },
   };
 }
