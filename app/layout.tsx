@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 import Script from "next/script";
 
 const inter = Inter({
@@ -60,6 +61,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <Header />
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
         <Footer />
+        <ScrollToTop />
       </body>
     </html>
   );
