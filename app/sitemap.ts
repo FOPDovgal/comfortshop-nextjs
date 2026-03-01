@@ -1,4 +1,8 @@
 import type { MetadataRoute } from "next";
+
+// Force dynamic so sitemap stays fresh after DB changes (no redeploy needed)
+export const dynamic = "force-dynamic";
+
 import { CATEGORIES } from "@/lib/categories";
 import { getAllGuides, getAllTops } from "@/lib/mdx";
 import { getAllCategoriesDB } from "@/lib/categories-db";
