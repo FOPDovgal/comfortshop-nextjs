@@ -156,13 +156,14 @@ export default function CategoriesTab() {
     const url = isNew
       ? `/api/admin/categories/${editSub.catId}/subcategories`
       : `/api/admin/subcategories/${editSub.sub.id}`;
+    const savedCatId = editSub.catId;
     try {
       const r = await fetch(url, {
         method: isNew ? "POST" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editSub.sub),
       });
-      if (r.ok) { setEditSub(null); loadCats(); }
+      if (r.ok) { setEditSub(null); setExpandedId(savedCatId); loadCats(); }
       else { const d = await r.json(); setErr(d.error ?? "Помилка збереження"); }
     } finally {
       setSaving(false);
