@@ -6,6 +6,13 @@ async function auth(req: NextRequest) {
   return validateSession(token);
 }
 
+function trim(s: string, max: number): string {
+  s = s.trim();
+  if (s.length <= max) return s;
+  const cut = s.lastIndexOf(" ", max - 1);
+  return (cut > max * 0.7 ? s.slice(0, cut) : s.slice(0, max - 1)) + "…";
+}
+
 async function callDeepSeek(system: string, user: string): Promise<string> {
   const key = process.env.DEEPSEEK_KEY ?? "sk-520a1fd1e52b45e4b9edeb91a46b8b42";
   const res = await fetch("https://api.deepseek.com/chat/completions", {
@@ -21,7 +28,7 @@ async function callDeepSeek(system: string, user: string): Promise<string> {
         { role: "user", content: user },
       ],
       temperature: 0.3,
-      max_tokens: 200,
+      max_tokens: 180,
     }),
   });
   const data = await res.json();
@@ -38,11 +45,18 @@ export async function POST(req: NextRequest) {
   const context = isSubcat && parentName ? ` (підкатегорія розділу «${parentName}»)` : "";
 
   const system =
-    "Ти SEO-спеціаліст для українського сайту ComfortShop — блогу про корисні товари. " +
-    "Генеруй SEO-метадані українською мовою. " +
-    "Відповідь ТІЛЬКИ у форматі JSON: {\"seo_title\":\"...\",\"seo_description\":\"...\"}. " +
-    "seo_title — максимум 60 символів. seo_description — максимум 160 символів. " +
-    "Без пояснень, тільки JSON.";
+    "Ти SEO-спеціаліст. Відповідаєш ТІЛЬКИ JSON: {\"seo_title\":\"...\",\"seo_description\":\"...\"}\n\n" +
+    "ЖОРСТКІ ЛІМІТИ (цільові діапазони з буфером):\n" +
+    "• seo_title:       48–56 символів  (реальний ліміт: 60)\n" +
+    "• seo_description: 138–155 символів (реальний ліміт: 160)\n\n" +
+    "ОБОВ'ЯЗКОВИЙ АЛГОРИТМ (виконуй мовчки):\n" +
+    "1. Напиши чернетку seo_title\n" +
+    "2. Порахуй довжину — скорочуй або доповнюй до 48–56 символів\n" +
+    "3. Напиши чернетку seo_description\n" +
+    "4. Порахуй довжину — скорочуй або доповнюй до 138–155 символів\n" +
+    "5. Виведи JSON — і більше нічого\n\n" +
+    "seo_title: головне ключове слово першим, природна мова, без назви сайту.\n" +
+    "seo_description: перше речення — що знайде читач; друге — перевага або заклик. Зв'язний текст, не перелік.";
 
   const user = isSubcat
     ? `Згенеруй seo_title і seo_description для підкатегорії «${name}»${context} на сайті ComfortShop.`
@@ -55,8 +69,8 @@ export async function POST(req: NextRequest) {
     if (!jsonMatch) throw new Error("No JSON in response");
     const parsed = JSON.parse(jsonMatch[0]);
     return NextResponse.json({
-      seo_title: (parsed.seo_title ?? "").slice(0, 60),
-      seo_description: (parsed.seo_description ?? "").slice(0, 160),
+      seo_title: trim(parsed.seo_title ?? "", 60),
+      seo_description: trim(parsed.seo_description ?? "", 160),
     });
   } catch (e) {
     return NextResponse.json({ error: "DeepSeek error: " + String(e) }, { status: 500 });
