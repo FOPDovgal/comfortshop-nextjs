@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCategoryBySlug, CATEGORIES } from "@/lib/categories";
+import { getCategoryBySlugDB } from "@/lib/categories-db";
 import { getAllArticlesForSubcategory } from "@/lib/mdx";
 import type { Metadata } from "next";
 
@@ -16,13 +17,41 @@ export function generateStaticParams() {
   return params;
 }
 
+type CatShape = {
+  slug: string;
+  name: string;
+  icon: string;
+  colorFrom: string;
+  colorTo: string;
+  bgLight: string;
+  subcategories: { slug: string; name: string; icon: string }[];
+};
+
+async function resolveCat(slug: string): Promise<CatShape | null> {
+  try {
+    const db = await getCategoryBySlugDB(slug);
+    if (db) {
+      return {
+        slug: db.slug,
+        name: db.name,
+        icon: db.icon,
+        colorFrom: db.color_from,
+        colorTo: db.color_to,
+        bgLight: db.bg_light,
+        subcategories: db.subcategories,
+      };
+    }
+  } catch {}
+  return getCategoryBySlug(slug) ?? null;
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string; subslug: string }>;
 }): Promise<Metadata> {
   const { slug, subslug } = await params;
-  const cat = getCategoryBySlug(slug);
+  const cat = await resolveCat(slug);
   const sub = cat?.subcategories.find((s) => s.slug === subslug);
   if (!cat || !sub) return {};
   return {
@@ -41,7 +70,7 @@ export default async function SubcategoryPage({
   params: Promise<{ slug: string; subslug: string }>;
 }) {
   const { slug, subslug } = await params;
-  const cat = getCategoryBySlug(slug);
+  const cat = await resolveCat(slug);
   const sub = cat?.subcategories.find((s) => s.slug === subslug);
   if (!cat || !sub) notFound();
 

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCategoryBySlug, CATEGORIES } from "@/lib/categories";
+import { getCategoryBySlugDB } from "@/lib/categories-db";
 import { getAllArticlesForCategory } from "@/lib/mdx";
 import type { Metadata } from "next";
 
@@ -10,17 +11,51 @@ export function generateStaticParams() {
   return CATEGORIES.map((c) => ({ slug: c.slug }));
 }
 
+type CatShape = {
+  slug: string;
+  name: string;
+  icon: string;
+  colorFrom: string;
+  colorTo: string;
+  bgLight: string;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  subcategories: { slug: string; name: string; icon: string }[];
+};
+
+async function resolveCat(slug: string): Promise<CatShape | null> {
+  try {
+    const db = await getCategoryBySlugDB(slug);
+    if (db) {
+      return {
+        slug: db.slug,
+        name: db.name,
+        icon: db.icon,
+        colorFrom: db.color_from,
+        colorTo: db.color_to,
+        bgLight: db.bg_light,
+        seo_title: db.seo_title,
+        seo_description: db.seo_description,
+        subcategories: db.subcategories,
+      };
+    }
+  } catch {}
+  return getCategoryBySlug(slug) ?? null;
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const cat = getCategoryBySlug(slug);
+  const cat = await resolveCat(slug);
   if (!cat) return {};
   return {
-    title: `${cat.name} — ComfortShop`,
-    description: `Огляди, рейтинги та підбірки у категорії «${cat.name}». Підкатегорії: ${cat.subcategories.map((s) => s.name).join(", ")}.`,
+    title: cat.seo_title ?? `${cat.name} — ComfortShop`,
+    description:
+      cat.seo_description ??
+      `Огляди, рейтинги та підбірки у категорії «${cat.name}». Підкатегорії: ${cat.subcategories.map((s) => s.name).join(", ")}.`,
   };
 }
 
@@ -34,7 +69,7 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const cat = getCategoryBySlug(slug);
+  const cat = await resolveCat(slug);
   if (!cat) notFound();
 
   const articles = await getAllArticlesForCategory(slug);

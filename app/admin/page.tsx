@@ -42,7 +42,7 @@ export default async function AdminPage() {
       title: a.title,
       type: a.type,
       category: a.category,
-      date: a.date.toString().slice(0, 10),
+      date: new Date(a.date as unknown as string).toISOString().slice(0, 10),
       status: a.status,
     })),
     ...fileArticles,

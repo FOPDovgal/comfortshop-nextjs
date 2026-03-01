@@ -6,13 +6,15 @@ import LinksManager from "./LinksManager";
 import BannerManager from "./BannerManager";
 import ChangePassword from "./ChangePassword";
 import ArticlesTab from "./ArticlesTab";
+import CategoriesTab from "./CategoriesTab";
 import type { ArticleMeta } from "./ArticlesTab";
 
 const TABS = [
-  { id: "articles", label: "📝", title: "Статті" },
-  { id: "banner",   label: "🎯", title: "Банер" },
-  { id: "links",    label: "🔗", title: "Посилання" },
-  { id: "settings", label: "⚙️", title: "Налаштування" },
+  { id: "articles",   label: "📝", title: "Статті" },
+  { id: "categories", label: "🗂️", title: "Категорії" },
+  { id: "banner",     label: "🎯", title: "Банер" },
+  { id: "links",      label: "🔗", title: "Посилання" },
+  { id: "settings",   label: "⚙️", title: "Налаштування" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -46,8 +48,9 @@ export default function AdminTabs({ links, articles }: Props) {
       </div>
 
       {/* Tab content */}
-      {activeTab === "articles" && <ArticlesTab articles={articles} />}
-      {activeTab === "banner"   && <BannerManager />}
+      {activeTab === "articles"   && <ArticlesTab articles={articles} />}
+      {activeTab === "categories" && <CategoriesTab />}
+      {activeTab === "banner"     && <BannerManager />}
       {activeTab === "links"    && (
         <div>
           <div className="mb-8">

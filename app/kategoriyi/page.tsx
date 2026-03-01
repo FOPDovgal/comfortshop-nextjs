@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { CATEGORIES } from "@/lib/categories";
+import { getAllCategoriesDB } from "@/lib/categories-db";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Категорії товарів — ComfortShop",
@@ -7,7 +10,42 @@ export const metadata = {
     "Огляди, топ-підбірки та гайди по всіх категоріях: від кухонних гаджетів до розумного дому.",
 };
 
-export default function CategoriesPage() {
+type CatItem = {
+  slug: string;
+  name: string;
+  icon: string;
+  colorFrom: string;
+  colorTo: string;
+  bgLight: string;
+  subcategories: { slug: string; name: string; icon: string }[];
+};
+
+export default async function CategoriesPage() {
+  let cats: CatItem[] = CATEGORIES.map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    icon: c.icon,
+    colorFrom: c.colorFrom,
+    colorTo: c.colorTo,
+    bgLight: c.bgLight,
+    subcategories: c.subcategories,
+  }));
+
+  try {
+    const dbCats = await getAllCategoriesDB();
+    if (dbCats.length > 0) {
+      cats = dbCats.map((c) => ({
+        slug: c.slug,
+        name: c.name,
+        icon: c.icon,
+        colorFrom: c.color_from,
+        colorTo: c.color_to,
+        bgLight: c.bg_light,
+        subcategories: c.subcategories,
+      }));
+    }
+  } catch {}
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
       <div className="mb-10">
@@ -18,7 +56,7 @@ export default function CategoriesPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {CATEGORIES.map((cat) => (
+        {cats.map((cat) => (
           <Link
             key={cat.slug}
             href={`/kategoriyi/${cat.slug}/`}
