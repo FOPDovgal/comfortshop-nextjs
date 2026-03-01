@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSession } from "@/lib/admin-auth";
 import { getDBArticleById, updateDBArticle, deleteDBArticle } from "@/lib/articles";
+import { notifyGoogleIndexing, articleUrl } from "@/lib/google-indexing";
 
 async function auth(req: NextRequest) {
   const token = req.cookies.get("admin_session")?.value ?? "";
@@ -24,6 +25,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const body = await req.json();
 
+  const existing = await getDBArticleById(Number(id));
+  const wasPublished = existing?.status === "published";
+
   await updateDBArticle(Number(id), {
     slug: body.slug,
     title: body.title,
@@ -46,6 +50,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     affiliate_url_3: body.affiliate_url_3 || undefined,
     increment_revision: true,
   });
+
+  // Notify Google Indexing API when article is published (new publish or update of already-published)
+  if (body.status === "published") {
+    const slug = body.slug || existing?.slug;
+    const type = body.type || existing?.type;
+    if (slug && type) {
+      notifyGoogleIndexing(articleUrl(type, slug)); // fire-and-forget
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }
 
