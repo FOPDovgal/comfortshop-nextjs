@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import { CATEGORIES, type Category } from "@/lib/categories";
 
@@ -9,18 +9,24 @@ interface Props {
   onActive: (cat: Category | null) => void;
 }
 
-const CAT_COUNT = CATEGORIES.length;
-const CAT_REM = CAT_COUNT % 3;
-
 // Returns the CSS class that controls landscape width for a given index
-function landscapeClass(idx: number): string {
-  if (CAT_REM === 1 && idx >= CAT_COUNT - 4) return "cat-btn-half"; // last 4 → 2+2
-  if (CAT_REM === 2 && idx >= CAT_COUNT - 2) return "cat-btn-half"; // last 2 → half
+function landscapeClass(idx: number, count: number): string {
+  const rem = count % 3;
+  if (rem === 1 && idx >= count - 4) return "cat-btn-half"; // last 4 → 2+2
+  if (rem === 2 && idx >= count - 2) return "cat-btn-half"; // last 2 → half
   return "cat-btn-third";
 }
 
 export default function CategoryNav({ active, onActive }: Props) {
   const navRef = useRef<HTMLDivElement>(null);
+  const [categories, setCategories] = useState<Category[]>(CATEGORIES);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setCategories(data); })
+      .catch(() => {});
+  }, []);
 
   // Close desktop dropdown on click outside
   useEffect(() => {
@@ -57,7 +63,7 @@ export default function CategoryNav({ active, onActive }: Props) {
       <div className="hidden md:block">
         {/* Buttons row */}
         <div className="flex flex-wrap items-center justify-center gap-2 px-4 py-2">
-          {CATEGORIES.map((cat) => {
+          {categories.map((cat) => {
             const isActive = active?.slug === cat.slug;
             return (
               <button
@@ -160,11 +166,11 @@ export default function CategoryNav({ active, onActive }: Props) {
         {/* State A: no category selected → show all buttons */}
         {!active && (
           <div className="mobile-cat-container flex flex-wrap justify-center gap-2 px-3 py-2.5">
-            {CATEGORIES.map((cat, idx) => (
+            {categories.map((cat, idx) => (
               <button
                 key={cat.slug}
                 onClick={() => toggle(cat)}
-                className={`mobile-cat-btn ${landscapeClass(idx)} flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-medium uppercase tracking-wider text-gray-700 active:bg-gray-200`}
+                className={`mobile-cat-btn ${landscapeClass(idx, categories.length)} flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-medium uppercase tracking-wider text-gray-700 active:bg-gray-200`}
               >
                 <span className="text-base">{cat.icon}</span>
                 <span>{cat.name}</span>
