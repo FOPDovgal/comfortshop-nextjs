@@ -136,7 +136,7 @@ function dbToArticle(db: DBArticle): Article {
       category3: db.category3 ?? undefined,
       subcategory3: db.subcategory3 ?? undefined,
       lang: db.lang,
-      date: db.date instanceof Date ? db.date.toISOString().slice(0, 10) : String(db.date).slice(0, 10),
+      date: new Date(db.date as unknown as string).toISOString().slice(0, 10),
       seo_title: db.seo_title ?? undefined,
       seo_description: db.seo_description ?? undefined,
       isHtml: true,
