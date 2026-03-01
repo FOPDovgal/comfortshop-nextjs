@@ -44,6 +44,7 @@ export default async function AdminPage() {
       category: a.category,
       date: new Date(a.date as unknown as string).toISOString().slice(0, 10),
       status: a.status,
+      indexing_sent_at: a.indexing_sent_at ?? null,
     })),
     ...fileArticles,
   ];

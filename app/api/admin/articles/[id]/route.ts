@@ -56,7 +56,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const slug = body.slug || existing?.slug;
     const type = body.type || existing?.type;
     if (slug && type) {
-      notifyGoogleIndexing(articleUrl(type, slug)); // fire-and-forget
+      notifyGoogleIndexing(articleUrl(type, slug), Number(id)); // fire-and-forget
     }
   }
 

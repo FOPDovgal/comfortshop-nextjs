@@ -12,6 +12,7 @@ export interface ArticleMeta {
   category: string;
   date: string;
   status?: string;
+  indexing_sent_at?: string | null;
 }
 
 const TYPE_LABEL: Record<string, { label: string; color: string }> = {
@@ -25,6 +26,11 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   draft:     { label: "Чернетка",     color: "bg-gray-100 text-gray-500" },
 };
 
+function fmtDate(iso: string) {
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 type View = "list" | "editor";
 
 export default function ArticlesTab({ articles: initialArticles }: { articles: ArticleMeta[] }) {
@@ -34,6 +40,7 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [loadingMdxSlug, setLoadingMdxSlug] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [indexingId, setIndexingId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
 
   function showMsg(text: string) {
@@ -79,6 +86,21 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
     setDeleteId(null);
   }
 
+  async function handleIndex(id: number) {
+    setIndexingId(id);
+    const res = await fetch(`/api/admin/articles/${id}/index`, { method: "POST" });
+    if (res.ok) {
+      const data = await res.json() as { sentAt: string };
+      setArticles((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, indexing_sent_at: data.sentAt } : a))
+      );
+      showMsg("✓ Відправлено в Google Indexing");
+    } else {
+      showMsg("⚠ Помилка відправки в Google");
+    }
+    setIndexingId(null);
+  }
+
   function handleSaved(saved: DBArticle) {
     const meta: ArticleMeta = {
       id: saved.id,
@@ -88,6 +110,7 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
       category: saved.category,
       date: saved.date.toString().slice(0, 10),
       status: saved.status,
+      indexing_sent_at: saved.indexing_sent_at ?? null,
     };
     setArticles((prev) => {
       const exists = prev.find((a) => a.id === saved.id);
@@ -140,13 +163,14 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
               <th className="px-4 py-3">Категорія</th>
               <th className="px-4 py-3">Статус</th>
               <th className="px-4 py-3">Дата</th>
+              <th className="px-4 py-3" title="Google Indexing">G</th>
               <th className="px-4 py-3">Дії</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {articles.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                   Немає статей. Створіть першу!
                 </td>
               </tr>
@@ -155,6 +179,8 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
               const typeInfo = TYPE_LABEL[a.type] ?? { label: a.type, color: "bg-gray-100 text-gray-600" };
               const statusInfo = STATUS_LABEL[a.status ?? "draft"] ?? STATUS_LABEL.draft;
               const urlPrefix = a.type === "top" ? "/top" : "/oglyady";
+              const isPublished = a.status === "published" && !!a.id;
+              const sent = a.indexing_sent_at;
               return (
                 <tr key={a.slug} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900 max-w-xs">
@@ -175,6 +201,35 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
                   <td className="px-4 py-3 text-xs text-gray-500">
                     {new Date(a.date).toLocaleDateString("uk-UA", { day: "numeric", month: "short", year: "numeric" })}
                   </td>
+
+                  {/* Google Indexing column */}
+                  <td className="px-4 py-3">
+                    {isPublished ? (
+                      <div className="flex flex-col items-start gap-0.5">
+                        {sent ? (
+                          <span
+                            className="text-xs font-medium text-green-600"
+                            title={`Відправлено ${new Date(sent).toLocaleString("uk-UA")}`}
+                          >
+                            ✓ {fmtDate(sent)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">не надіслано</span>
+                        )}
+                        <button
+                          onClick={() => handleIndex(a.id!)}
+                          disabled={indexingId === a.id}
+                          title={sent ? "Надіслати повторно" : "Надіслати в Google"}
+                          className="rounded px-1.5 py-0.5 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-40"
+                        >
+                          {indexingId === a.id ? "⏳" : "📤"}
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
+                  </td>
+
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {a.id ? (

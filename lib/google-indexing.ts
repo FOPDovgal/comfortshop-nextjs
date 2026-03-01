@@ -1,4 +1,5 @@
 import { createSign } from "crypto";
+import pool from "./db";
 
 const TOKEN_URI = "https://oauth2.googleapis.com/token";
 const SCOPE = "https://www.googleapis.com/auth/indexing";
@@ -52,17 +53,31 @@ export function articleUrl(type: string, slug: string): string {
   return `${BASE}/oglyady/${slug}`;
 }
 
-export async function notifyGoogleIndexing(url: string): Promise<void> {
-  if (!process.env.GOOGLE_INDEXING_CLIENT_EMAIL) return; // not configured — skip silently
+/**
+ * Sends URL to Google Indexing API.
+ * If articleId is provided, records indexing_sent_at in DB on success.
+ * Returns true on success, false on failure. Never throws.
+ */
+export async function notifyGoogleIndexing(url: string, articleId?: number): Promise<boolean> {
+  if (!process.env.GOOGLE_INDEXING_CLIENT_EMAIL) return false; // not configured
 
   try {
     const token = await getAccessToken();
-    await fetch("https://indexing.googleapis.com/v3/urlNotifications:publish", {
+    const res = await fetch("https://indexing.googleapis.com/v3/urlNotifications:publish", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ url, type: "URL_UPDATED" }),
     });
+
+    if (res.ok && articleId) {
+      await pool.execute(
+        "UPDATE articles SET indexing_sent_at = NOW() WHERE id = ?",
+        [articleId]
+      );
+    }
+
+    return res.ok;
   } catch {
-    // Fail silently — indexing is non-critical
+    return false;
   }
 }

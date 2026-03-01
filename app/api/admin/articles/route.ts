@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     // Notify Google Indexing API for newly published articles
     const finalStatus = body.status ?? "published";
     if (finalStatus === "published") {
-      notifyGoogleIndexing(articleUrl(type, slug)); // fire-and-forget
+      notifyGoogleIndexing(articleUrl(type, slug), id); // fire-and-forget
     }
 
     return NextResponse.json({ ok: true, id }, { status: 201 });

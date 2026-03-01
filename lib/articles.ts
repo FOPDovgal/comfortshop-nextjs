@@ -25,6 +25,7 @@ export interface DBArticle {
   affiliate_url_2: string | null;
   affiliate_url_3: string | null;
   image_url: string | null;
+  indexing_sent_at: string | null;
 }
 
 export type DBArticleInput = {
