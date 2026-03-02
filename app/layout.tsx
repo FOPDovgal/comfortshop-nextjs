@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+import CookieConsent from "@/components/CookieConsent";
 import Script from "next/script";
 
 const inter = Inter({
@@ -75,6 +76,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
         <Footer />
         <ScrollToTop />
+        <CookieConsent />
       </body>
     </html>
   );
