@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { CATEGORIES } from "@/lib/categories";
+
+type CatOption = { slug: string; name: string; icon: string; subcategories: { slug: string; name: string; icon: string }[] };
 import type { DBArticle } from "@/lib/articles";
 
 // ── Ukrainian transliteration (KMU 2010) ─────────────────────────────────────
@@ -196,6 +198,15 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
         }
       : { ...EMPTY }
   );
+
+  // Load categories from DB (falls back to static CATEGORIES while loading)
+  const [cats, setCats] = useState<CatOption[]>(CATEGORIES);
+  useEffect(() => {
+    fetch("/api/admin/categories")
+      .then((r) => r.json())
+      .then((data: CatOption[]) => { if (Array.isArray(data) && data.length > 0) setCats(data); })
+      .catch(() => {});
+  }, []);
 
   const [tab, setTab] = useState<"write" | "split" | "preview">("split");
   const [saving, setSaving] = useState(false);
@@ -421,9 +432,9 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
     onSaved(saved);
   }
 
-  const selectedCat  = CATEGORIES.find((c) => c.slug === form.category);
-  const selectedCat2 = CATEGORIES.find((c) => c.slug === form.category2);
-  const selectedCat3 = CATEGORIES.find((c) => c.slug === form.category3);
+  const selectedCat  = cats.find((c) => c.slug === form.category);
+  const selectedCat2 = cats.find((c) => c.slug === form.category2);
+  const selectedCat3 = cats.find((c) => c.slug === form.category3);
 
   // Derived value for float preview width
   const previewWidth = imgWidth
@@ -839,7 +850,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
                 >
                   <option value="">— Оберіть категорію —</option>
-                  {CATEGORIES.map((c) => (
+                  {cats.map((c) => (
                     <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>
                   ))}
                 </select>
@@ -866,7 +877,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
                 >
                   <option value="">— Не обрано —</option>
-                  {CATEGORIES.map((c) => (
+                  {cats.map((c) => (
                     <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>
                   ))}
                 </select>
@@ -893,7 +904,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
                 >
                   <option value="">— Не обрано —</option>
-                  {CATEGORIES.map((c) => (
+                  {cats.map((c) => (
                     <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>
                   ))}
                 </select>
