@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { getAllGuides, getGuideBySlugFull } from "@/lib/mdx";
+import { processDbContent } from "@/lib/html-process";
 import AffiliateCTABlock from "@/components/AffiliateCTABlock";
 import MdxImg from "@/components/MdxImg";
 import type { Metadata } from "next";
@@ -78,7 +79,7 @@ export default async function GuidePage({ params }: Props) {
       {/* Content */}
       <article className="prose prose-gray max-w-none">
         {frontmatter.isHtml ? (
-          <div dangerouslySetInnerHTML={{ __html: content }} />
+          <div dangerouslySetInnerHTML={{ __html: processDbContent(content) }} />
         ) : (
           <MDXRemote source={content} components={{ Img: MdxImg }} />
         )}
