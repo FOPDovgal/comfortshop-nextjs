@@ -58,8 +58,9 @@ export function categoryUrl(slug: string): string {
 }
 
 /**
- * Checks if any of the given category slugs has >= 2 published articles.
- * If so, notifies Google Indexing for that category page.
+ * Checks if any of the given category slugs has >= 2 published articles
+ * AND has never been submitted to Google Indexing (indexing_sent_at IS NULL).
+ * On success, records indexing_sent_at in DB so it won't be re-submitted.
  * Fire-and-forget — never throws.
  */
 export async function checkAndNotifyCategoryIndexing(
@@ -72,15 +73,31 @@ export async function checkAndNotifyCategoryIndexing(
 
   try {
     for (const slug of unique) {
-      const [rows] = await pool.execute<import("mysql2").RowDataPacket[]>(
+      // Skip if already indexed
+      const [catRows] = await pool.execute<import("mysql2").RowDataPacket[]>(
+        "SELECT id, indexing_sent_at FROM categories WHERE slug = ?",
+        [slug]
+      );
+      const cat = catRows[0];
+      if (!cat || cat.indexing_sent_at !== null) continue;
+
+      // Count published articles in this category (all 3 slots)
+      const [cntRows] = await pool.execute<import("mysql2").RowDataPacket[]>(
         `SELECT COUNT(*) AS cnt FROM articles
          WHERE status = 'published'
          AND (category = ? OR category2 = ? OR category3 = ?)`,
         [slug, slug, slug]
       );
-      const cnt = (rows[0]?.cnt as number) ?? 0;
+      const cnt = (cntRows[0]?.cnt as number) ?? 0;
+
       if (cnt >= 2) {
-        notifyGoogleIndexing(categoryUrl(slug)); // fire-and-forget
+        const ok = await notifyGoogleIndexing(categoryUrl(slug));
+        if (ok) {
+          await pool.execute(
+            "UPDATE categories SET indexing_sent_at = NOW() WHERE id = ?",
+            [cat.id]
+          );
+        }
       }
     }
   } catch {
