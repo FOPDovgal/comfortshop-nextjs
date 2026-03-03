@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import CookieConsent from "@/components/CookieConsent";
-import Script from "next/script";
+import AnalyticsScripts from "@/components/AnalyticsScripts";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -33,9 +33,6 @@ export const metadata: Metadata = {
   },
 };
 
-const GTM_ID = "GTM-K62XV844";
-const GA4_ID = "G-PGNXTP1505";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,35 +40,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uk">
-      <head>
-        {/* Google Tag Manager */}
-        <Script id="gtm-script" strategy="afterInteractive">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','${GTM_ID}');`}
-        </Script>
-
-        {/* Google Analytics 4 */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-script" strategy="afterInteractive">
-          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA4_ID}');`}
-        </Script>
-      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        {/* GTM noscript */}
-        <noscript>
-          <iframe
-            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
-            height="0"
-            width="0"
-            style={{ display: "none", visibility: "hidden" }}
-          />
-        </noscript>
+        <AnalyticsScripts />
         <Header />
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
         <Footer />

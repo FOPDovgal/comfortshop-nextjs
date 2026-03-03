@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/api/", "/umovy-vykorystannya"],
+        disallow: ["/admin", "/admin/", "/api/"],
       },
     ],
     sitemap: "https://comfortshop.com.ua/sitemap.xml",
