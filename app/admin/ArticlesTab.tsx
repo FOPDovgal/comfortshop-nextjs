@@ -93,11 +93,11 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
         if (!match) return false;
       }
       if (filterSubcategory) {
-        const match =
-          (a.category === filterCategory && a.subcategory === filterSubcategory) ||
-          (a.category2 === filterCategory && a.subcategory2 === filterSubcategory) ||
-          (a.category3 === filterCategory && a.subcategory3 === filterSubcategory);
-        if (!match) return false;
+        const hasSubcat =
+          a.subcategory === filterSubcategory ||
+          a.subcategory2 === filterSubcategory ||
+          a.subcategory3 === filterSubcategory;
+        if (!hasSubcat) return false;
       }
       return true;
     });
