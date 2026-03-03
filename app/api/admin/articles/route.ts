@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSession } from "@/lib/admin-auth";
 import { getAllDBArticles, createDBArticle } from "@/lib/articles";
-import { notifyGoogleIndexing, articleUrl } from "@/lib/google-indexing";
+import { notifyGoogleIndexing, articleUrl, checkAndNotifyCategoryIndexing } from "@/lib/google-indexing";
 
 async function auth(req: NextRequest) {
   const token = req.cookies.get("admin_session")?.value ?? "";
@@ -53,10 +53,11 @@ export async function POST(req: NextRequest) {
       affiliate_url_2: body.affiliate_url_2 || undefined,
       affiliate_url_3: body.affiliate_url_3 || undefined,
     });
-    // Notify Google Indexing API for newly published articles
-    const finalStatus = body.status ?? "published";
+    // Notify Google Indexing API for newly published articles + categories with 2+ articles
+    const finalStatus = body.status ?? "draft";
     if (finalStatus === "published") {
       notifyGoogleIndexing(articleUrl(type, slug), id); // fire-and-forget
+      checkAndNotifyCategoryIndexing([category, body.category2, body.category3]); // fire-and-forget
     }
 
     return NextResponse.json({ ok: true, id }, { status: 201 });

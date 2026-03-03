@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createDBArticle, updateDBArticle, getDBArticleBySlug } from "@/lib/articles";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://comfortshop.com.ua";
+import { notifyGoogleIndexing, articleUrl as libArticleUrl, checkAndNotifyCategoryIndexing } from "@/lib/google-indexing";
 
 function authOk(req: NextRequest): boolean {
   const header = req.headers.get("authorization") ?? "";
@@ -10,8 +9,7 @@ function authOk(req: NextRequest): boolean {
 }
 
 function articleUrl(type: string, slug: string): string {
-  if (type === "top") return `${SITE_URL}/top/${slug}/`;
-  return `${SITE_URL}/oglyady/${slug}/`;
+  return libArticleUrl(type, slug);
 }
 
 export async function POST(req: NextRequest) {
@@ -36,6 +34,7 @@ export async function POST(req: NextRequest) {
 
   if (existing) {
     // Update existing article
+    const finalStatus = body.status ?? "published";
     await updateDBArticle(existing.id, {
       title,
       content,
@@ -50,13 +49,17 @@ export async function POST(req: NextRequest) {
       subcategory3: body.subcategory3 || undefined,
       seo_title: body.seo_title,
       seo_description: body.seo_description,
-      status: body.status ?? "published",
+      status: finalStatus,
       affiliate_url_1: body.affiliate_url_1 || undefined,
       affiliate_url_2: body.affiliate_url_2 || undefined,
       affiliate_url_3: body.affiliate_url_3 || undefined,
       image_url: body.image_url,
       increment_revision: true,
     });
+    if (finalStatus === "published") {
+      notifyGoogleIndexing(articleUrl(type, slug), existing.id); // fire-and-forget
+      checkAndNotifyCategoryIndexing([category, body.category2, body.category3]); // fire-and-forget
+    }
     return NextResponse.json({
       ok: true,
       id: existing.id,
@@ -67,6 +70,7 @@ export async function POST(req: NextRequest) {
 
   // Create new article
   try {
+    const finalStatus = body.status ?? "published";
     const id = await createDBArticle({
       slug,
       title,
@@ -83,12 +87,16 @@ export async function POST(req: NextRequest) {
       date,
       seo_title: body.seo_title,
       seo_description: body.seo_description,
-      status: body.status ?? "published",
+      status: finalStatus,
       affiliate_url_1: body.affiliate_url_1 || undefined,
       affiliate_url_2: body.affiliate_url_2 || undefined,
       affiliate_url_3: body.affiliate_url_3 || undefined,
       image_url: body.image_url,
     });
+    if (finalStatus === "published") {
+      notifyGoogleIndexing(articleUrl(type, slug), id); // fire-and-forget
+      checkAndNotifyCategoryIndexing([category, body.category2, body.category3]); // fire-and-forget
+    }
     return NextResponse.json({
       ok: true,
       id,

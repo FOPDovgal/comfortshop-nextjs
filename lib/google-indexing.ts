@@ -53,6 +53,41 @@ export function articleUrl(type: string, slug: string): string {
   return `${BASE}/oglyady/${slug}`;
 }
 
+export function categoryUrl(slug: string): string {
+  return `${BASE}/kategoriyi/${slug}`;
+}
+
+/**
+ * Checks if any of the given category slugs has >= 2 published articles.
+ * If so, notifies Google Indexing for that category page.
+ * Fire-and-forget — never throws.
+ */
+export async function checkAndNotifyCategoryIndexing(
+  categorySlugs: (string | null | undefined)[]
+): Promise<void> {
+  if (!process.env.GOOGLE_INDEXING_CLIENT_EMAIL) return;
+
+  const unique = [...new Set(categorySlugs.filter(Boolean))] as string[];
+  if (unique.length === 0) return;
+
+  try {
+    for (const slug of unique) {
+      const [rows] = await pool.execute<import("mysql2").RowDataPacket[]>(
+        `SELECT COUNT(*) AS cnt FROM articles
+         WHERE status = 'published'
+         AND (category = ? OR category2 = ? OR category3 = ?)`,
+        [slug, slug, slug]
+      );
+      const cnt = (rows[0]?.cnt as number) ?? 0;
+      if (cnt >= 2) {
+        notifyGoogleIndexing(categoryUrl(slug)); // fire-and-forget
+      }
+    }
+  } catch {
+    // silent fail
+  }
+}
+
 /**
  * Sends URL to Google Indexing API.
  * If articleId is provided, records indexing_sent_at in DB on success.
