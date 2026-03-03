@@ -10,6 +10,11 @@ export interface ArticleMeta {
   title: string;
   type: string;
   category: string;
+  subcategory?: string | null;
+  category2?: string | null;
+  subcategory2?: string | null;
+  category3?: string | null;
+  subcategory3?: string | null;
   date: string;
   status?: string;
   indexing_sent_at?: string | null;
@@ -77,24 +82,26 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const catObj = cats.find((c) => c.slug === filterCategory);
-    const subSlugs = new Set(catObj?.subcategories.map((s) => s.slug) ?? []);
-
     return articles.filter((a) => {
       if (q && !a.title.toLowerCase().includes(q) && !a.slug.toLowerCase().includes(q)) return false;
       if (filterStatus && (a.status ?? "draft") !== filterStatus) return false;
       if (filterCategory) {
-        const articleCats = a.category.split(",").map((s) => s.trim());
-        const match = articleCats.includes(filterCategory) || articleCats.some((s) => subSlugs.has(s));
+        const match =
+          a.category === filterCategory ||
+          a.category2 === filterCategory ||
+          a.category3 === filterCategory;
         if (!match) return false;
       }
       if (filterSubcategory) {
-        const articleCats = a.category.split(",").map((s) => s.trim());
-        if (!articleCats.includes(filterSubcategory)) return false;
+        const match =
+          (a.category === filterCategory && a.subcategory === filterSubcategory) ||
+          (a.category2 === filterCategory && a.subcategory2 === filterSubcategory) ||
+          (a.category3 === filterCategory && a.subcategory3 === filterSubcategory);
+        if (!match) return false;
       }
       return true;
     });
-  }, [articles, search, filterStatus, filterCategory, filterSubcategory, cats]);
+  }, [articles, search, filterStatus, filterCategory, filterSubcategory]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -165,6 +172,11 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
       title: saved.title,
       type: saved.type,
       category: saved.category,
+      subcategory: saved.subcategory ?? null,
+      category2: saved.category2 ?? null,
+      subcategory2: saved.subcategory2 ?? null,
+      category3: saved.category3 ?? null,
+      subcategory3: saved.subcategory3 ?? null,
       date: saved.date.toString().slice(0, 10),
       status: saved.status,
       indexing_sent_at: saved.indexing_sent_at ?? null,
