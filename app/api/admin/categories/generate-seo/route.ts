@@ -6,6 +6,10 @@ async function auth(req: NextRequest) {
   return validateSession(token);
 }
 
+function stripMarkdown(s: string): string {
+  return s.replace(/\*\*?/g, "").replace(/__?/g, "").replace(/`/g, "").replace(/^#+\s*/gm, "").trim();
+}
+
 function trim(s: string, max: number): string {
   s = s.trim();
   if (s.length <= max) return s;
@@ -56,7 +60,8 @@ export async function POST(req: NextRequest) {
     "4. Порахуй довжину — скорочуй або доповнюй до 138–155 символів\n" +
     "5. Виведи JSON — і більше нічого\n\n" +
     "seo_title: головне ключове слово першим, природна мова, без назви сайту.\n" +
-    "seo_description: перше речення — що знайде читач; друге — перевага або заклик. Зв'язний текст, не перелік.";
+    "seo_description: перше речення — що знайде читач; друге — перевага або заклик. Зв'язний текст, не перелік.\n" +
+    "КРИТИЧНО: ТІЛЬКИ ЗВИЧАЙНИЙ ТЕКСТ — жодного markdown (** * __ _ ` #)!";
 
   const user = isSubcat
     ? `Згенеруй seo_title і seo_description для підкатегорії «${name}»${context} на сайті ComfortShop.`
@@ -69,8 +74,8 @@ export async function POST(req: NextRequest) {
     if (!jsonMatch) throw new Error("No JSON in response");
     const parsed = JSON.parse(jsonMatch[0]);
     return NextResponse.json({
-      seo_title: trim(parsed.seo_title ?? "", 60),
-      seo_description: trim(parsed.seo_description ?? "", 160),
+      seo_title: trim(stripMarkdown(parsed.seo_title ?? ""), 60),
+      seo_description: trim(stripMarkdown(parsed.seo_description ?? ""), 160),
     });
   } catch (e) {
     return NextResponse.json({ error: "DeepSeek error: " + String(e) }, { status: 500 });
