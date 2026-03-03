@@ -48,14 +48,16 @@ export async function POST(req: NextRequest) {
   const isSubcat = type === "subcategory";
   const context = isSubcat && parentName ? ` (підкатегорія розділу «${parentName}»)` : "";
 
+  // Next.js layout.tsx використовує template: "%s | ComfortShop" (+14 символів)
+  // Тому реальний ліміт seo_title = 60 − 14 = 46 символів
   const system =
     "Ти SEO-спеціаліст. Відповідаєш ТІЛЬКИ JSON: {\"seo_title\":\"...\",\"seo_description\":\"...\"}\n\n" +
     "ЖОРСТКІ ЛІМІТИ (цільові діапазони з буфером):\n" +
-    "• seo_title:       48–56 символів  (реальний ліміт: 60)\n" +
+    "• seo_title:       34–42 символів  (реальний ліміт: 46; до заголовку автоматично додається \" | ComfortShop\", разом ≤60)\n" +
     "• seo_description: 138–155 символів (реальний ліміт: 160)\n\n" +
     "ОБОВ'ЯЗКОВИЙ АЛГОРИТМ (виконуй мовчки):\n" +
     "1. Напиши чернетку seo_title\n" +
-    "2. Порахуй довжину — скорочуй або доповнюй до 48–56 символів\n" +
+    "2. Порахуй довжину — скорочуй або доповнюй до 34–42 символів\n" +
     "3. Напиши чернетку seo_description\n" +
     "4. Порахуй довжину — скорочуй або доповнюй до 138–155 символів\n" +
     "5. Виведи JSON — і більше нічого\n\n" +
@@ -74,7 +76,7 @@ export async function POST(req: NextRequest) {
     if (!jsonMatch) throw new Error("No JSON in response");
     const parsed = JSON.parse(jsonMatch[0]);
     return NextResponse.json({
-      seo_title: trim(stripMarkdown(parsed.seo_title ?? ""), 60),
+      seo_title: trim(stripMarkdown(parsed.seo_title ?? ""), 44),
       seo_description: trim(stripMarkdown(parsed.seo_description ?? ""), 160),
     });
   } catch (e) {
