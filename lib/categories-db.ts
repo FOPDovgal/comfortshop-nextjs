@@ -6,6 +6,7 @@ export type DBSubcategory = {
   slug: string;
   name: string;
   icon: string;
+  description: string | null;
   seo_title: string | null;
   seo_description: string | null;
   sort_order: number;
@@ -19,6 +20,7 @@ export type DBCategory = {
   color_from: string;
   color_to: string;
   bg_light: string;
+  description: string | null;
   seo_title: string | null;
   seo_description: string | null;
   sort_order: number;
@@ -79,6 +81,7 @@ export type CategoryInput = {
   color_from?: string;
   color_to?: string;
   bg_light?: string;
+  description?: string | null;
   seo_title?: string | null;
   seo_description?: string | null;
   sort_order?: number;
@@ -98,7 +101,7 @@ export async function createCategoryDB(data: CategoryInput): Promise<number> {
 }
 
 export async function updateCategoryDB(id: number, data: Partial<CategoryInput>): Promise<void> {
-  const fields = ["slug","name","icon","color_from","color_to","bg_light","seo_title","seo_description","sort_order"] as const;
+  const fields = ["slug","name","icon","color_from","color_to","bg_light","description","seo_title","seo_description","sort_order"] as const;
   const setters: string[] = [];
   const values: (string | number | null)[] = [];
   for (const f of fields) {
@@ -122,6 +125,7 @@ export type SubcategoryInput = {
   slug: string;
   name: string;
   icon?: string;
+  description?: string | null;
   seo_title?: string | null;
   seo_description?: string | null;
   sort_order?: number;
@@ -140,7 +144,7 @@ export async function addSubcategoryDB(categoryId: number, data: SubcategoryInpu
 }
 
 export async function updateSubcategoryDB(id: number, data: Partial<SubcategoryInput>): Promise<void> {
-  const fields = ["slug","name","icon","seo_title","seo_description","sort_order"] as const;
+  const fields = ["slug","name","icon","description","seo_title","seo_description","sort_order"] as const;
   const setters: string[] = [];
   const values: (string | number | null)[] = [];
   for (const f of fields) {

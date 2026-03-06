@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 type Sub = {
   id: number;
@@ -8,6 +8,7 @@ type Sub = {
   slug: string;
   name: string;
   icon: string;
+  description: string | null;
   seo_title: string | null;
   seo_description: string | null;
   sort_order: number;
@@ -21,6 +22,7 @@ type Cat = {
   color_from: string;
   color_to: string;
   bg_light: string;
+  description: string | null;
   seo_title: string | null;
   seo_description: string | null;
   sort_order: number;
@@ -30,13 +32,111 @@ type Cat = {
 const EMPTY_CAT: Cat = {
   id: 0, slug: "", name: "", icon: "📦",
   color_from: "#6366f1", color_to: "#8b5cf6", bg_light: "#f5f3ff",
-  seo_title: null, seo_description: null, sort_order: 0, subcategories: [],
+  description: null, seo_title: null, seo_description: null, sort_order: 0, subcategories: [],
 };
 
 const EMPTY_SUB: Sub = {
   id: 0, category_id: 0, slug: "", name: "", icon: "📌",
-  seo_title: null, seo_description: null, sort_order: 0,
+  description: null, seo_title: null, seo_description: null, sort_order: 0,
 };
+
+// ── HTML Editor with toolbar ───────────────────────────────────────────────
+type ToolbarItem =
+  | { label: string; title: string; before: string; after: string; placeholder?: string }
+  | { label: string; title: string; line: string };
+
+const TOOLBAR_ITEMS: ToolbarItem[] = [
+  { label: "H2",  title: "Заголовок 2", before: "<h2>",         after: "</h2>",         placeholder: "заголовок" },
+  { label: "H3",  title: "Заголовок 3", before: "<h3>",         after: "</h3>",         placeholder: "заголовок" },
+  { label: "B",   title: "Жирний",      before: "<strong>",     after: "</strong>",     placeholder: "жирний текст" },
+  { label: "I",   title: "Курсив",      before: "<em>",         after: "</em>",         placeholder: "курсив" },
+  { label: "🔗",  title: "Посилання",   before: '<a href="URL">', after: "</a>",         placeholder: "текст посилання" },
+  { label: "•",   title: "Список",      before: "<li>",         after: "</li>",         placeholder: "пункт списку" },
+  { label: "❝",   title: "Цитата",      before: "<blockquote>", after: "</blockquote>", placeholder: "цитата" },
+  { label: "—",   title: "Роздільник",  line: "<hr />" },
+];
+
+function HtmlEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const [preview, setPreview] = useState(false);
+
+  const applyFormat = useCallback((item: ToolbarItem) => {
+    const ta = taRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end   = ta.selectionEnd;
+    const text  = value;
+
+    if ("line" in item) {
+      const lineStart = text.lastIndexOf("\n", start - 1) + 1;
+      const newText = text.slice(0, lineStart) + item.line + "\n" + text.slice(lineStart);
+      onChange(newText);
+      setTimeout(() => { ta.focus(); ta.setSelectionRange(lineStart + item.line.length + 1, lineStart + item.line.length + 1); }, 0);
+      return;
+    }
+
+    const selected = text.slice(start, end) || item.placeholder || "";
+    const newText = text.slice(0, start) + item.before + selected + item.after + text.slice(end);
+    onChange(newText);
+    setTimeout(() => {
+      ta.focus();
+      const cursor = start + item.before.length + selected.length + item.after.length;
+      ta.setSelectionRange(cursor, cursor);
+    }, 0);
+  }, [value, onChange]);
+
+  return (
+    <div className="rounded-xl border border-gray-200 overflow-hidden">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-1 border-b border-gray-200 bg-gray-50 px-2 py-1.5">
+        {TOOLBAR_ITEMS.map((item) => (
+          <button
+            key={item.label}
+            type="button"
+            title={item.title}
+            onMouseDown={(e) => { e.preventDefault(); applyFormat(item); }}
+            className="rounded px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200"
+          >
+            {item.label}
+          </button>
+        ))}
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setPreview(false)}
+            className={`rounded px-2 py-1 text-xs ${!preview ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-200"}`}
+          >
+            HTML
+          </button>
+          <button
+            type="button"
+            onClick={() => setPreview(true)}
+            className={`rounded px-2 py-1 text-xs ${preview ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-200"}`}
+          >
+            Перегляд
+          </button>
+        </div>
+      </div>
+
+      {preview ? (
+        <div
+          className="prose prose-sm max-w-none min-h-[300px] p-4 text-sm text-gray-800"
+          dangerouslySetInnerHTML={{ __html: value || "<p class='text-gray-400'>Опис порожній</p>" }}
+        />
+      ) : (
+        <textarea
+          ref={taRef}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={14}
+          className="w-full resize-y px-3 py-2 font-mono text-xs text-gray-800 focus:outline-none"
+          placeholder="HTML-опис категорії..."
+          spellCheck={false}
+        />
+      )}
+    </div>
+  );
+}
 
 function Field({
   label, value, onChange, type = "text", hint, rows,
@@ -253,6 +353,15 @@ export default function CategoriesTab() {
           <Field label="Порядок сортування" value={String(editCat.sort_order)}
             onChange={(v) => setEditCat({ ...editCat, sort_order: Number(v) || 0 })} type="number" />
 
+          {/* Description */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Опис категорії (HTML)</label>
+            <HtmlEditor
+              value={editCat.description ?? ""}
+              onChange={(v) => setEditCat({ ...editCat, description: v || null })}
+            />
+          </div>
+
           {/* SEO */}
           <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
             <div className="mb-3 flex items-center justify-between">
@@ -334,6 +443,15 @@ export default function CategoriesTab() {
           <Field label="Порядок сортування" value={String(editSub.sub.sort_order)}
             onChange={(v) => setEditSub({ ...editSub, sub: { ...editSub.sub, sort_order: Number(v) || 0 } })}
             type="number" />
+
+          {/* Description */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Опис підкатегорії (HTML)</label>
+            <HtmlEditor
+              value={editSub.sub.description ?? ""}
+              onChange={(v) => setEditSub({ ...editSub, sub: { ...editSub.sub, description: v || null } })}
+            />
+          </div>
 
           {/* SEO */}
           <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
@@ -424,7 +542,10 @@ export default function CategoriesTab() {
                   <p className="text-xs text-gray-400">{cat.slug} · {cat.subcategories.length} підкатегорій</p>
                 </div>
 
-                {/* SEO indicator */}
+                {/* indicators */}
+                {cat.description && (
+                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">Опис ✓</span>
+                )}
                 {cat.seo_title && (
                   <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">SEO ✓</span>
                 )}

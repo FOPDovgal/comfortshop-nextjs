@@ -17,6 +17,8 @@ export function generateStaticParams() {
   return params;
 }
 
+type SubShape = { slug: string; name: string; icon: string; description?: string | null };
+
 type CatShape = {
   slug: string;
   name: string;
@@ -24,7 +26,7 @@ type CatShape = {
   colorFrom: string;
   colorTo: string;
   bgLight: string;
-  subcategories: { slug: string; name: string; icon: string }[];
+  subcategories: SubShape[];
 };
 
 async function resolveCat(slug: string): Promise<CatShape | null> {
@@ -38,7 +40,12 @@ async function resolveCat(slug: string): Promise<CatShape | null> {
         colorFrom: db.color_from,
         colorTo: db.color_to,
         bgLight: db.bg_light,
-        subcategories: db.subcategories,
+        subcategories: db.subcategories.map((s) => ({
+          slug: s.slug,
+          name: s.name,
+          icon: s.icon,
+          description: s.description,
+        })),
       };
     }
   } catch {}
@@ -192,6 +199,14 @@ export default async function SubcategoryPage({
             </article>
           ))}
         </div>
+      )}
+
+      {/* Subcategory description */}
+      {sub.description && (
+        <div
+          className="category-description prose prose-sm sm:prose max-w-none mt-14"
+          dangerouslySetInnerHTML={{ __html: sub.description }}
+        />
       )}
     </main>
   );

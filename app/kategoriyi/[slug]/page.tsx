@@ -18,6 +18,7 @@ type CatShape = {
   colorFrom: string;
   colorTo: string;
   bgLight: string;
+  description?: string | null;
   seo_title?: string | null;
   seo_description?: string | null;
   subcategories: { slug: string; name: string; icon: string }[];
@@ -34,6 +35,7 @@ async function resolveCat(slug: string): Promise<CatShape | null> {
         colorFrom: db.color_from,
         colorTo: db.color_to,
         bgLight: db.bg_light,
+        description: db.description,
         seo_title: db.seo_title,
         seo_description: db.seo_description,
         subcategories: db.subcategories,
@@ -198,6 +200,14 @@ export default async function CategoryPage({
           </div>
         )}
       </div>
+
+      {/* Category description */}
+      {cat.description && (
+        <div
+          className="category-description prose prose-sm sm:prose max-w-none mt-14"
+          dangerouslySetInnerHTML={{ __html: cat.description }}
+        />
+      )}
     </main>
   );
 }
