@@ -129,11 +129,8 @@ export default function CategoryNav({ active, onActive }: Props) {
               </div>
 
               {/* Right — subcategory grid */}
-              <div className="flex-1 overflow-y-auto rounded-2xl p-5" style={{ backgroundColor: active.bgLight }}>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
-                  Підкатегорії
-                </p>
-                <div className="grid grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="flex-1 rounded-2xl p-4" style={{ backgroundColor: active.bgLight }}>
+                <div className="grid grid-cols-4 gap-2">
                   {active.subcategories.map((sub) => (
                     <Link
                       key={sub.slug}
