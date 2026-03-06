@@ -126,6 +126,14 @@ export default async function SubcategoryPage({
         </div>
       </div>
 
+      {/* Subcategory description — shown before articles so it's visible on mobile */}
+      {sub.description && (
+        <div
+          className="category-description prose prose-sm sm:prose-base max-w-none mt-6 mb-10"
+          dangerouslySetInnerHTML={{ __html: sub.description }}
+        />
+      )}
+
       {/* Articles */}
       {articles.length === 0 ? (
         <div
@@ -201,13 +209,6 @@ export default async function SubcategoryPage({
         </div>
       )}
 
-      {/* Subcategory description */}
-      {sub.description && (
-        <div
-          className="category-description prose prose-sm sm:prose max-w-none mt-14"
-          dangerouslySetInnerHTML={{ __html: sub.description }}
-        />
-      )}
     </main>
   );
 }

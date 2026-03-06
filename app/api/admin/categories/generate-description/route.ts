@@ -177,23 +177,40 @@ async function generateDescriptionHtml(opts: {
     `Напиши повний SEO HTML-опис для цієї сторінки категорії.`,
   ].filter((l) => l !== undefined).join("\n");
 
-  const res = await fetch("https://api.deepseek.com/chat/completions", {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const res = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${DEEPSEEK_KEY}` },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+        temperature: 0.4,
+        max_tokens: 4500,
+      }),
+    });
+    const d = await res.json();
+    let html = ((d?.choices?.[0]?.message?.content ?? "") as string).trim();
+    html = html.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim();
+    if (!html.includes("\uFFFD")) return html;
+    if (attempt < 3) await new Promise(r => setTimeout(r, 3000));
+  }
+  // Last resort: strip replacement chars
+  const res2 = await fetch("https://api.deepseek.com/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${DEEPSEEK_KEY}` },
     body: JSON.stringify({
       model: "deepseek-chat",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      temperature: 0.4,
-      max_tokens: 4500,
+      messages: [{ role: "system", content: system }, { role: "user", content: user }],
+      temperature: 0.4, max_tokens: 4500,
     }),
   });
-  const d = await res.json();
-  let html = ((d?.choices?.[0]?.message?.content ?? "") as string).trim();
-  html = html.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim();
-  return html;
+  const d2 = await res2.json();
+  let html2 = ((d2?.choices?.[0]?.message?.content ?? "") as string).trim();
+  html2 = html2.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim();
+  return html2.replace(/\uFFFD/g, "");
 }
 
 export async function POST(req: NextRequest) {

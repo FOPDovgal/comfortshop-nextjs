@@ -130,6 +130,14 @@ export default async function CategoryPage({
         ))}
       </div>
 
+      {/* Category description — shown before articles so it's visible on mobile */}
+      {cat.description && (
+        <div
+          className="category-description prose prose-sm sm:prose-base max-w-none mt-10 mb-10"
+          dangerouslySetInnerHTML={{ __html: cat.description }}
+        />
+      )}
+
       {/* Articles */}
       <div className="mt-14">
         <h2 className="mb-5 text-xl font-bold text-gray-900">Статті та огляди</h2>
@@ -201,13 +209,6 @@ export default async function CategoryPage({
         )}
       </div>
 
-      {/* Category description */}
-      {cat.description && (
-        <div
-          className="category-description prose prose-sm sm:prose max-w-none mt-14"
-          dangerouslySetInnerHTML={{ __html: cat.description }}
-        />
-      )}
     </main>
   );
 }
