@@ -172,6 +172,7 @@ export default function CategoriesTab() {
   const [loading, setLoading] = useState(true);
   const [editCat, setEditCat] = useState<Cat | null>(null);
   const [editSub, setEditSub] = useState<{ sub: Sub; catId: number; catName: string } | null>(null);
+  const [descLoading, setDescLoading] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [seoLoading, setSeoLoading] = useState(false);
@@ -222,6 +223,59 @@ export default function CategoriesTab() {
       }
     } finally {
       setSeoLoading(false);
+    }
+  }
+
+  async function generateDescForCat() {
+    if (!editCat || !editCat.name) return;
+    setDescLoading(true);
+    try {
+      const r = await fetch("/api/admin/categories/generate-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editCat.name,
+          slug: editCat.slug,
+          type: "category",
+          subcategories: editCat.subcategories.map((s) => ({ slug: s.slug, name: s.name })),
+        }),
+      });
+      if (r.ok) {
+        const { description } = await r.json();
+        setEditCat((c) => c && { ...c, description });
+      } else {
+        const d = await r.json();
+        setErr(d.error ?? "Помилка генерації");
+      }
+    } finally {
+      setDescLoading(false);
+    }
+  }
+
+  async function generateDescForSub() {
+    if (!editSub || !editSub.sub.name) return;
+    setDescLoading(true);
+    try {
+      const r = await fetch("/api/admin/categories/generate-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editSub.sub.name,
+          slug: editSub.sub.slug,
+          type: "subcategory",
+          parentName: editSub.catName,
+          parentSlug: cats.find((c) => c.id === editSub.catId)?.slug ?? "",
+        }),
+      });
+      if (r.ok) {
+        const { description } = await r.json();
+        setEditSub((s) => s && { ...s, sub: { ...s.sub, description } });
+      } else {
+        const d = await r.json();
+        setErr(d.error ?? "Помилка генерації");
+      }
+    } finally {
+      setDescLoading(false);
     }
   }
 
@@ -355,7 +409,17 @@ export default function CategoriesTab() {
 
           {/* Description */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Опис категорії (HTML)</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-gray-600">Опис категорії (HTML)</label>
+              <button
+                type="button"
+                onClick={generateDescForCat}
+                disabled={descLoading || !editCat.name || !editCat.slug}
+                className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {descLoading ? "Генерація (~30с)..." : "✨ Генерувати опис"}
+              </button>
+            </div>
             <HtmlEditor
               value={editCat.description ?? ""}
               onChange={(v) => setEditCat({ ...editCat, description: v || null })}
@@ -446,7 +510,17 @@ export default function CategoriesTab() {
 
           {/* Description */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Опис підкатегорії (HTML)</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-gray-600">Опис підкатегорії (HTML)</label>
+              <button
+                type="button"
+                onClick={generateDescForSub}
+                disabled={descLoading || !editSub.sub.name || !editSub.sub.slug}
+                className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {descLoading ? "Генерація (~30с)..." : "✨ Генерувати опис"}
+              </button>
+            </div>
             <HtmlEditor
               value={editSub.sub.description ?? ""}
               onChange={(v) => setEditSub({ ...editSub, sub: { ...editSub.sub, description: v || null } })}
