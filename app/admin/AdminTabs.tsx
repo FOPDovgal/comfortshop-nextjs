@@ -8,6 +8,7 @@ import ChangePassword from "./ChangePassword";
 import ArticlesTab from "./ArticlesTab";
 import CategoriesTab from "./CategoriesTab";
 import FooterTab from "./FooterTab";
+import ImagesTab from "./ImagesTab";
 import type { ArticleMeta } from "./ArticlesTab";
 
 const TABS = [
@@ -15,6 +16,7 @@ const TABS = [
   { id: "categories", label: "🗂️", title: "Категорії" },
   { id: "banner",     label: "🎯", title: "Банер" },
   { id: "links",      label: "🔗", title: "Посилання" },
+  { id: "images",     label: "🖼️", title: "Зображення" },
   { id: "footer",     label: "🔻", title: "Підвал" },
   { id: "settings",   label: "⚙️", title: "Налаштування" },
 ] as const;
@@ -65,6 +67,7 @@ export default function AdminTabs({ links, articles }: Props) {
           <LinksManager initialLinks={links} />
         </div>
       )}
+      {activeTab === "images"   && <ImagesTab />}
       {activeTab === "footer"   && <FooterTab />}
       {activeTab === "settings" && <ChangePassword />}
     </div>

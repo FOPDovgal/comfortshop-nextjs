@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Топ-списки товарів",
   description: "Добірки найкращих товарів для дому та офісу: рейтинги, порівняння, рекомендації.",
+  alternates: { canonical: "https://comfortshop.com.ua/top" },
 };
 
 export default async function TopPage() {
@@ -43,7 +44,7 @@ export default async function TopPage() {
               </h2>
               <p className="mb-4 text-sm text-gray-600">{article.frontmatter.excerpt}</p>
               <div className="flex items-center justify-between">
-                <time className="text-xs text-gray-400">
+                <time className="text-xs text-gray-400" dateTime={new Date(article.frontmatter.date).toISOString()}>
                   {new Date(article.frontmatter.date).toLocaleDateString("uk-UA", {
                     day: "numeric",
                     month: "long",

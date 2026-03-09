@@ -35,6 +35,10 @@ yarn-error.log*
 .env.local
 .env.*.local
 
+# Google service account credentials — must never be committed
+*-service-account.json
+comfortshop-182219*.json
+
 # vercel
 .vercel
 

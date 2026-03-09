@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Огляди товарів",
   description: "Детальні огляди корисних товарів для дому та офісу з AliExpress та Temu.",
+  alternates: { canonical: "https://comfortshop.com.ua/oglyady" },
 };
 
 export default async function OglyadyPage() {
@@ -40,7 +41,7 @@ export default async function OglyadyPage() {
               </h2>
               <p className="mb-4 text-sm text-gray-600">{article.frontmatter.excerpt}</p>
               <div className="flex items-center justify-between">
-                <time className="text-xs text-gray-400">
+                <time className="text-xs text-gray-400" dateTime={new Date(article.frontmatter.date).toISOString()}>
                   {new Date(article.frontmatter.date).toLocaleDateString("uk-UA", {
                     day: "numeric",
                     month: "long",

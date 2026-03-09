@@ -7,6 +7,8 @@ import { CATEGORIES } from "@/lib/categories";
 import { getAllGuides, getAllTops } from "@/lib/mdx";
 import { getAllCategoriesDB } from "@/lib/categories-db";
 import { getAllDBArticles } from "@/lib/articles";
+import { DISCOVER_PAGES } from "@/lib/discover-pages";
+import { ENTITY_PAGES } from "@/lib/entity-pages";
 
 const BASE = "https://comfortshop.com.ua";
 
@@ -24,6 +26,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/oglyady`,    lastModified: now, changeFrequency: "daily",  priority: 0.9 },
     { url: `${BASE}/top`,        lastModified: now, changeFrequency: "daily",  priority: 0.9 },
     { url: `${BASE}/kategoriyi`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${BASE}/discover`,   lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${BASE}/podarunky`,  lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     // NOTE: /umovy-vykorystannya is intentionally excluded (noindex page)
   ];
 
@@ -85,6 +89,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
+  const discoverPages: MetadataRoute.Sitemap = DISCOVER_PAGES
+    .filter((p) => p.status === "published")
+    .map((p) => ({
+      url: `${BASE}/discover/${p.slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+
+  const entityPages: MetadataRoute.Sitemap = ENTITY_PAGES
+    .filter((p) => p.status === "published")
+    .map((p) => ({
+      url: `${BASE}/podarunky/${p.slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+
   return [
     ...staticPages,
     ...categoryPages,
@@ -92,5 +114,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...dbArticleEntries,
     ...guides,
     ...tops,
+    ...discoverPages,
+    ...entityPages,
   ];
 }

@@ -5,6 +5,7 @@ import matter from "gray-matter";
 const contentDir = path.join(process.cwd(), "content");
 
 export type ArticleFrontmatter = {
+  id?: number;
   title: string;
   slug: string;
   excerpt: string;
@@ -125,6 +126,7 @@ function dbToArticle(db: DBArticle): Article {
     slug: db.slug,
     content: db.content,
     frontmatter: {
+      id: db.id,
       title: db.title,
       slug: db.slug,
       excerpt: db.excerpt ?? "",
