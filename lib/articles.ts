@@ -64,7 +64,7 @@ export async function getDBArticlesByType(
 ): Promise<DBArticle[]> {
   const placeholders = types.map(() => "?").join(",");
   const [rows] = await pool.execute(
-    `SELECT * FROM articles WHERE type IN (${placeholders}) AND status = 'published' ORDER BY date DESC`,
+    `SELECT * FROM articles WHERE type IN (${placeholders}) AND status = 'published' AND lang = 'uk' ORDER BY date DESC`,
     types
   );
   return rows as DBArticle[];
@@ -72,7 +72,7 @@ export async function getDBArticlesByType(
 
 export async function getDBArticleBySlug(slug: string): Promise<DBArticle | null> {
   const [rows] = await pool.execute(
-    "SELECT * FROM articles WHERE slug = ?",
+    "SELECT * FROM articles WHERE slug = ? AND lang = 'uk'",
     [slug]
   );
   const arr = rows as DBArticle[];
@@ -174,6 +174,7 @@ export async function getPublishedArticlesByCategory(category: string): Promise<
     `SELECT * FROM articles
      WHERE (category = ? OR category2 = ? OR category3 = ?)
        AND status = 'published'
+       AND lang = 'uk'
      ORDER BY date DESC`,
     [category, category, category]
   );
@@ -187,6 +188,7 @@ export async function getPublishedArticlesBySubcategory(
   const [rows] = await pool.execute(
     `SELECT * FROM articles
      WHERE status = 'published'
+       AND lang = 'uk'
        AND (
          (category = ? AND subcategory = ?) OR
          (category2 = ? AND subcategory2 = ?) OR

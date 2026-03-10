@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function GuidePage({ params }: Props) {
   const { slug } = await params;
   const article = await getGuideBySlugFull(slug);
-  if (!article) notFound();
+  if (!article || article.frontmatter.lang !== "uk") notFound();
 
   const { frontmatter } = article;
   // Strip leading # H1 from content — title is displayed separately below
