@@ -8,6 +8,7 @@ import MdxImg from "@/components/MdxImg";
 import { DISCOVER_PAGES } from "@/lib/discover-pages";
 import { ENTITY_PAGES } from "@/lib/entity-pages";
 import { resolveImage } from "@/lib/images";
+import { getArticleAlternates, buildLanguagesMap } from "@/lib/i18n";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -30,15 +31,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const images = resolvedImage
     ? [{ url: resolvedImage, width: 1200, height: 630, alt: frontmatter.title }]
     : [];
+  const selfUrl = `https://comfortshop.com.ua/oglyady/${slug}`;
+  const alts = frontmatter.id != null ? await getArticleAlternates(frontmatter.id) : {};
+  const languages = buildLanguagesMap(alts);
+
   return {
     title,
     description,
-    alternates: { canonical: `https://comfortshop.com.ua/oglyady/${slug}` },
+    alternates: { canonical: selfUrl, ...(languages ? { languages } : {}) },
     openGraph: {
       type: "article",
       title,
       description,
-      url: `https://comfortshop.com.ua/oglyady/${slug}`,
+      url: selfUrl,
       images,
       publishedTime: new Date(frontmatter.date).toISOString(),
       modifiedTime: new Date(frontmatter.date).toISOString(),

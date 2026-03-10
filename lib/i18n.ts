@@ -77,6 +77,29 @@ export function entityUrl(slug: string, lang: Lang = "uk"): string {
   return `${langPrefix(lang)}/podarunky/${slug}`;
 }
 
+// ── Alternates builder ────────────────────────────────────────────────────────
+
+const BASE = "https://comfortshop.com.ua";
+
+/**
+ * Converts a getArticleAlternates() result (relative paths) into a
+ * Next.js Metadata.alternates.languages map (absolute URLs).
+ *
+ * Returns undefined when fewer than 2 language variants exist — nothing to emit.
+ * x-default always points to the Ukrainian (root) URL.
+ */
+export function buildLanguagesMap(
+  alts: Partial<Record<Lang, string>>
+): Record<string, string> | undefined {
+  if (Object.keys(alts).length < 2) return undefined;
+  const map: Record<string, string> = {};
+  for (const [lang, path] of Object.entries(alts)) {
+    map[lang] = BASE + path;
+  }
+  if (alts.uk) map["x-default"] = BASE + alts.uk;
+  return map;
+}
+
 // ── DB helpers ────────────────────────────────────────────────────────────────
 
 /**

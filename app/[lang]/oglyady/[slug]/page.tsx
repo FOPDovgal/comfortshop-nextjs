@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { processDbContent } from "@/lib/html-process";
-import { isSupportedLang } from "@/lib/i18n";
+import { isSupportedLang, getArticleAlternates, buildLanguagesMap } from "@/lib/i18n";
 import { getArticleBySlugLang } from "@/lib/articles";
 import type { Metadata } from "next";
 
@@ -15,15 +15,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!article) return {};
   const title = article.seo_title ?? article.title;
   const description = article.seo_description ?? article.excerpt ?? "";
+  const selfUrl = `https://comfortshop.com.ua/${lang}/oglyady/${slug}`;
+  const alts = article.canonical_id != null ? await getArticleAlternates(article.canonical_id) : {};
+  const languages = buildLanguagesMap(alts);
+
   return {
     title,
     description,
-    alternates: { canonical: `https://comfortshop.com.ua/${lang}/oglyady/${slug}` },
+    alternates: { canonical: selfUrl, ...(languages ? { languages } : {}) },
     openGraph: {
       type: "article",
       title,
       description,
-      url: `https://comfortshop.com.ua/${lang}/oglyady/${slug}`,
+      url: selfUrl,
       publishedTime: new Date(article.date).toISOString(),
     },
   };
