@@ -161,6 +161,14 @@ export async function deleteDBArticle(id: number): Promise<void> {
   await pool.execute("DELETE FROM articles WHERE id = ?", [id]);
 }
 
+export async function getArticleBySlugLang(slug: string, lang: string): Promise<DBArticle | null> {
+  const [rows] = await pool.execute(
+    "SELECT * FROM articles WHERE slug = ? AND lang = ? AND status = 'published'",
+    [slug, lang]
+  );
+  return (rows as DBArticle[])[0] ?? null;
+}
+
 export async function getPublishedArticlesByCategory(category: string): Promise<DBArticle[]> {
   const [rows] = await pool.execute(
     `SELECT * FROM articles

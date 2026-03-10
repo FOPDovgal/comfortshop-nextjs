@@ -21,6 +21,6 @@ export const config = {
   // Applies only to old WordPress-style paths.
   // Excludes Next.js internals, API, admin, valid site pages, and static assets.
   matcher: [
-    "/((?!_next|api|admin|kategoriyi|oglyady|top|search|umovy-vykorystannya|uploads|favicon|icon\\.svg|robots\\.txt|sitemap\\.xml).*)",
+    "/((?!_next|api|admin|ru|en|kategoriyi|oglyady|top|discover|podarunky|search|umovy-vykorystannya|uploads|favicon|icon\\.svg|robots\\.txt|sitemap\\.xml).*)",
   ],
 };
