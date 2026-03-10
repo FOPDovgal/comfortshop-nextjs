@@ -89,12 +89,12 @@ export type CategoryInput = {
 
 export async function createCategoryDB(data: CategoryInput): Promise<number> {
   const [result] = await pool.execute(
-    `INSERT INTO categories (slug, name, icon, color_from, color_to, bg_light, seo_title, seo_description, sort_order)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO categories (slug, name, icon, color_from, color_to, bg_light, description, seo_title, seo_description, sort_order)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       data.slug, data.name, data.icon ?? "📦",
       data.color_from ?? "#6366f1", data.color_to ?? "#8b5cf6", data.bg_light ?? "#f5f3ff",
-      data.seo_title ?? null, data.seo_description ?? null, data.sort_order ?? 0,
+      data.description ?? null, data.seo_title ?? null, data.seo_description ?? null, data.sort_order ?? 0,
     ]
   );
   return (result as { insertId: number }).insertId;
@@ -133,11 +133,11 @@ export type SubcategoryInput = {
 
 export async function addSubcategoryDB(categoryId: number, data: SubcategoryInput): Promise<number> {
   const [result] = await pool.execute(
-    `INSERT INTO subcategories (category_id, slug, name, icon, seo_title, seo_description, sort_order)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO subcategories (category_id, slug, name, icon, description, seo_title, seo_description, sort_order)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       categoryId, data.slug, data.name, data.icon ?? "📌",
-      data.seo_title ?? null, data.seo_description ?? null, data.sort_order ?? 0,
+      data.description ?? null, data.seo_title ?? null, data.seo_description ?? null, data.sort_order ?? 0,
     ]
   );
   return (result as { insertId: number }).insertId;
