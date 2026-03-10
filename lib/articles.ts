@@ -14,6 +14,7 @@ export interface DBArticle {
   category3: string | null;
   subcategory3: string | null;
   lang: string;
+  canonical_id: number | null;
   date: string;
   seo_title: string | null;
   seo_description: string | null;
