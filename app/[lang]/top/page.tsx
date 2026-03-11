@@ -39,6 +39,7 @@ export default async function TranslatedTopPage({ params }: Props) {
   const locale = lang === "ru" ? "ru-RU" : "en-US";
 
   const articles = await getDBArticlesByTypeLang(["top"], lang);
+  if (articles.length === 0) notFound();
 
   const now = Date.now();
   const isNew = (date: string) => now - new Date(date).getTime() < 14 * 24 * 60 * 60 * 1000;

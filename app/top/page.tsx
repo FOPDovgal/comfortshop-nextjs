@@ -7,7 +7,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Топ-списки товарів",
   description: "Добірки найкращих товарів для дому та офісу: рейтинги, порівняння, рекомендації.",
-  alternates: { canonical: "https://comfortshop.com.ua/top" },
+  alternates: {
+    canonical: "https://comfortshop.com.ua/top",
+    languages: {
+      uk: "https://comfortshop.com.ua/top",
+      ru: "https://comfortshop.com.ua/ru/top",
+      "x-default": "https://comfortshop.com.ua/top",
+    },
+  },
 };
 
 export default async function TopPage() {

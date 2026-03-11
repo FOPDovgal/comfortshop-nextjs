@@ -85,6 +85,7 @@ export default async function TranslatedCategoryPage({ params }: Props) {
   if (!cat) notFound();
 
   const articles = await getPublishedArticlesByCategoryLang(slug, lang);
+  if (articles.length === 0) notFound();
 
   const now = Date.now();
   const isNew = (date: string) => now - new Date(date).getTime() < 14 * 24 * 60 * 60 * 1000;

@@ -7,7 +7,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Огляди товарів",
   description: "Детальні огляди корисних товарів для дому та офісу з AliExpress та Temu.",
-  alternates: { canonical: "https://comfortshop.com.ua/oglyady" },
+  alternates: {
+    canonical: "https://comfortshop.com.ua/oglyady",
+    languages: {
+      uk: "https://comfortshop.com.ua/oglyady",
+      ru: "https://comfortshop.com.ua/ru/oglyady",
+      "x-default": "https://comfortshop.com.ua/oglyady",
+    },
+  },
 };
 
 export default async function OglyadyPage() {
