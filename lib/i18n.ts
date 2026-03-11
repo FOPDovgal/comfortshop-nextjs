@@ -127,6 +127,86 @@ export async function getArticleAlternates(
   return result;
 }
 
+// ── UI strings for multilingual listing/category pages ────────────────────────
+
+export type LangStrings = {
+  listingOglyady: string;
+  listingOglyadyDesc: string;
+  listingTop: string;
+  listingTopDesc: string;
+  readMore: string;
+  home: string;
+  categories: string;
+  subcategories: string;
+  articlesSection: string;
+  articleTypeTop: string;
+  articleTypeReview: string;
+  newBadge: string;
+  backTo: string;
+  noArticles: string;
+  articlesLabel: string;
+};
+
+const UI_STRINGS: Record<Lang, LangStrings> = {
+  uk: {
+    listingOglyady: "Огляди товарів",
+    listingOglyadyDesc: "Детальні огляди корисних товарів для дому та офісу з AliExpress та Temu.",
+    listingTop: "Топ-списки товарів",
+    listingTopDesc: "Добірки найкращих товарів для дому та офісу: рейтинги, порівняння, рекомендації.",
+    readMore: "Читати →",
+    home: "Головна",
+    categories: "Категорії",
+    subcategories: "Підкатегорії",
+    articlesSection: "Статті та огляди",
+    articleTypeTop: "Топ-підбірка",
+    articleTypeReview: "Огляд",
+    newBadge: "Нове",
+    backTo: "Назад до",
+    noArticles: "Статті з'являться тут найближчим часом",
+    articlesLabel: "статей",
+  },
+  ru: {
+    listingOglyady: "Обзоры товаров",
+    listingOglyadyDesc: "Подробные обзоры полезных товаров для дома и офиса с AliExpress и Temu.",
+    listingTop: "Топ-списки товаров",
+    listingTopDesc: "Подборки лучших товаров для дома и офиса: рейтинги, сравнения, рекомендации.",
+    readMore: "Читать →",
+    home: "Главная",
+    categories: "Категории",
+    subcategories: "Подкатегории",
+    articlesSection: "Статьи и обзоры",
+    articleTypeTop: "Топ-список",
+    articleTypeReview: "Обзор",
+    newBadge: "Новое",
+    backTo: "Назад к",
+    noArticles: "Статьи появятся здесь в ближайшее время",
+    articlesLabel: "статей",
+  },
+  en: {
+    listingOglyady: "Product Reviews",
+    listingOglyadyDesc: "Detailed reviews of useful products for home and office from AliExpress and Temu.",
+    listingTop: "Top Lists",
+    listingTopDesc: "Collections of the best products for home and office: ratings, comparisons, recommendations.",
+    readMore: "Read →",
+    home: "Home",
+    categories: "Categories",
+    subcategories: "Subcategories",
+    articlesSection: "Articles and Reviews",
+    articleTypeTop: "Top List",
+    articleTypeReview: "Review",
+    newBadge: "New",
+    backTo: "Back to",
+    noArticles: "Articles will appear here soon",
+    articlesLabel: "articles",
+  },
+};
+
+export function getLangStrings(lang: Lang): LangStrings {
+  return UI_STRINGS[lang];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
  * Returns a single published translation for a given canonical_id and target lang.
  * For lang='uk', returns the canonical row itself (id = canonicalId).

@@ -201,3 +201,50 @@ export async function getPublishedArticlesBySubcategory(
   );
   return rows as DBArticle[];
 }
+
+export async function getDBArticlesByTypeLang(
+  types: Array<"guide" | "top" | "review">,
+  lang: string
+): Promise<DBArticle[]> {
+  const placeholders = types.map(() => "?").join(",");
+  const [rows] = await pool.execute(
+    `SELECT * FROM articles WHERE type IN (${placeholders}) AND status = 'published' AND lang = ? ORDER BY date DESC`,
+    [...types, lang]
+  );
+  return rows as DBArticle[];
+}
+
+export async function getPublishedArticlesByCategoryLang(
+  category: string,
+  lang: string
+): Promise<DBArticle[]> {
+  const [rows] = await pool.execute(
+    `SELECT * FROM articles
+     WHERE (category = ? OR category2 = ? OR category3 = ?)
+       AND status = 'published'
+       AND lang = ?
+     ORDER BY date DESC`,
+    [category, category, category, lang]
+  );
+  return rows as DBArticle[];
+}
+
+export async function getPublishedArticlesBySubcategoryLang(
+  category: string,
+  subcategory: string,
+  lang: string
+): Promise<DBArticle[]> {
+  const [rows] = await pool.execute(
+    `SELECT * FROM articles
+     WHERE status = 'published'
+       AND lang = ?
+       AND (
+         (category = ? AND subcategory = ?) OR
+         (category2 = ? AND subcategory2 = ?) OR
+         (category3 = ? AND subcategory3 = ?)
+       )
+     ORDER BY date DESC`,
+    [lang, category, subcategory, category, subcategory, category, subcategory]
+  );
+  return rows as DBArticle[];
+}

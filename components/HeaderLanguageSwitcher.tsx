@@ -11,12 +11,10 @@ const LANG_LABELS: Record<Lang, string> = { uk: "UA", ru: "RU", en: "EN" };
 const LANGS: Lang[] = ["uk", "ru", "en"];
 
 // Which langs have listing pages at (lang)/oglyady and (lang)/top
-// Add "ru" / "en" here when those listing routes are created
-const LISTING_ROUTE_LANGS: Lang[] = ["uk"];
+const LISTING_ROUTE_LANGS: Lang[] = ["uk", "ru"];
 
 // Which langs have category pages at (lang)/kategoriyi/...
-// Add "ru" / "en" here when those routes are created
-const CATEGORY_ROUTE_LANGS: Lang[] = ["uk"];
+const CATEGORY_ROUTE_LANGS: Lang[] = ["uk", "ru"];
 
 function getPageInfo(pathname: string): { type: PageType; lang: Lang; basePath: string } {
   const parts = pathname.split("/").filter(Boolean);
