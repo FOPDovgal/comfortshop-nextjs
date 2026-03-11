@@ -145,6 +145,7 @@ interface ArticleForm {
   category3: string;
   subcategory3: string;
   lang: string;
+  canonical_id: number | null;
   excerpt: string;
   seo_title: string;
   seo_description: string;
@@ -154,24 +155,36 @@ interface ArticleForm {
   affiliate_url_3: string;
 }
 
+export interface ArticleSibling {
+  id: number;
+  lang: string;
+  title: string;
+  slug?: string;
+  status?: string;
+  canonical_id?: number | null;
+}
+
 const EMPTY: ArticleForm = {
   title: "", slug: "", type: "guide", status: "draft",
   date: new Date().toISOString().slice(0, 10),
   category: "", subcategory: "",
   category2: "", subcategory2: "",
   category3: "", subcategory3: "",
-  lang: "uk",
+  lang: "uk", canonical_id: null,
   excerpt: "", seo_title: "", seo_description: "", content: "",
   affiliate_url_1: "", affiliate_url_2: "", affiliate_url_3: "",
 };
 
 interface Props {
   article?: DBArticle | null;
+  siblings?: ArticleSibling[];
   onSaved: (article: DBArticle) => void;
   onCancel: () => void;
+  onEditId?: (id: number) => void;
+  onCreateTranslation?: (lang: string) => void;
 }
 
-export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
+export default function ArticleEditor({ article, siblings = [], onSaved, onCancel, onEditId, onCreateTranslation }: Props) {
   const isNew = !article || article.id === 0;
   const [form, setForm] = useState<ArticleForm>(
     article
@@ -188,6 +201,7 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
           category3: article.category3 ?? "",
           subcategory3: article.subcategory3 ?? "",
           lang: article.lang,
+          canonical_id: article.canonical_id ?? null,
           excerpt: article.excerpt ?? "",
           seo_title: article.seo_title ?? "",
           seo_description: article.seo_description ?? "",
@@ -1074,7 +1088,76 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
               <option value="ru">🇷🇺 Російська</option>
               <option value="en">🇬🇧 English</option>
             </select>
+            {form.canonical_id && (
+              <p className="mt-2 text-xs text-gray-400">canonical_id: {form.canonical_id}</p>
+            )}
           </div>
+
+          {/* Translation siblings */}
+          {!isNew && (() => {
+            const ALL_LANGS = ["uk", "ru", "en"];
+            const LANG_CFG: Record<string, { flag: string; label: string }> = {
+              uk: { flag: "🇺🇦", label: "Українська" },
+              ru: { flag: "🇷🇺", label: "Російська" },
+              en: { flag: "🇬🇧", label: "English" },
+            };
+            const currentLang = article!.lang ?? "uk";
+            const canonicalId = currentLang === "uk" ? article!.id : (article!.canonical_id ?? null);
+            const hasSiblings = siblings.length > 0;
+            const canCreate = !!canonicalId && !!onCreateTranslation;
+            if (!hasSiblings && !canCreate) return null;
+            return (
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Переклади</p>
+                <div className="flex flex-col gap-1.5">
+                  {ALL_LANGS.map((lang) => {
+                    const cfg = LANG_CFG[lang] ?? { flag: "🌐", label: lang };
+                    if (lang === currentLang) {
+                      return (
+                        <div key={lang} className="flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2">
+                          <span className="text-sm">{cfg.flag}</span>
+                          <span className="flex-1 text-xs font-semibold text-indigo-700 truncate">
+                            {cfg.label} (поточна)
+                          </span>
+                        </div>
+                      );
+                    }
+                    const sibling = siblings.find((s) => s.lang === lang);
+                    if (sibling) {
+                      return (
+                        <div key={lang} className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                          <span className="text-sm">{cfg.flag}</span>
+                          <span className="flex-1 text-xs text-gray-600 truncate" title={sibling.title}>
+                            {sibling.title || sibling.slug || lang.toUpperCase()}
+                          </span>
+                          <button
+                            onClick={() => { onEditId?.(sibling.id); }}
+                            className="shrink-0 rounded bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+                          >
+                            ✏ Ред.
+                          </button>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={lang} className="flex items-center gap-2 rounded-lg border border-dashed border-gray-200 px-3 py-2">
+                        <span className="text-sm opacity-40">{cfg.flag}</span>
+                        <span className="flex-1 text-xs text-gray-400">{cfg.label}</span>
+                        {canCreate && (
+                          <button
+                            onClick={() => onCreateTranslation!(lang)}
+                            className="shrink-0 rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 hover:bg-green-100"
+                          >
+                            + Створити
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Image governance bridge */}
           {!isNew && (() => {

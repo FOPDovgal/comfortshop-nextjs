@@ -50,6 +50,7 @@ export type DBArticleInput = {
   affiliate_url_2?: string;
   affiliate_url_3?: string;
   image_url?: string;
+  canonical_id?: number | null;
 };
 
 export async function getAllDBArticles(): Promise<DBArticle[]> {
@@ -93,9 +94,9 @@ export async function createDBArticle(data: DBArticleInput): Promise<number> {
     `INSERT INTO articles
       (slug, title, excerpt, content, type, category, subcategory,
        category2, subcategory2, category3, subcategory3,
-       lang, date, seo_title, seo_description, status, revision_count,
+       canonical_id, lang, date, seo_title, seo_description, status, revision_count,
        affiliate_url_1, affiliate_url_2, affiliate_url_3, image_url)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
     [
       data.slug,
       data.title,
@@ -108,6 +109,7 @@ export async function createDBArticle(data: DBArticleInput): Promise<number> {
       data.subcategory2 ?? null,
       data.category3 ?? null,
       data.subcategory3 ?? null,
+      data.canonical_id ?? null,
       data.lang ?? "uk",
       data.date,
       data.seo_title ?? null,
@@ -133,7 +135,7 @@ export async function updateDBArticle(
   const allowed: Array<keyof DBArticleInput> = [
     "slug", "title", "excerpt", "content", "type", "category",
     "subcategory", "category2", "subcategory2", "category3", "subcategory3",
-    "lang", "date", "seo_title", "seo_description", "status",
+    "canonical_id", "lang", "date", "seo_title", "seo_description", "status",
     "affiliate_url_1", "affiliate_url_2", "affiliate_url_3", "image_url",
   ];
 

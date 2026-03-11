@@ -50,6 +50,8 @@ export default async function AdminPage() {
       date: new Date(a.date as unknown as string).toISOString().slice(0, 10),
       status: a.status,
       indexing_sent_at: a.indexing_sent_at ?? null,
+      lang: a.lang,
+      canonical_id: a.canonical_id ?? null,
     })),
     ...fileArticles,
   ];

@@ -40,6 +40,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     subcategory2: body.subcategory2 || undefined,
     category3: body.category3 || undefined,
     subcategory3: body.subcategory3 || undefined,
+    canonical_id: body.canonical_id ?? undefined,
     lang: body.lang,
     date: body.date,
     seo_title: body.seo_title,

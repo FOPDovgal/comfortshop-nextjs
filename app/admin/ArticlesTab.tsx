@@ -18,6 +18,8 @@ export interface ArticleMeta {
   date: string;
   status?: string;
   indexing_sent_at?: string | null;
+  lang?: string;
+  canonical_id?: number | null;
 }
 
 const TYPE_LABEL: Record<string, { label: string; color: string }> = {
@@ -59,6 +61,7 @@ export default function ArticlesTab({ articles: initialArticles, autoEditId }: {
   // Filter / pagination state
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterLang, setFilterLang] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [filterSubcategory, setFilterSubcategory] = useState("");
   const [pageSize, setPageSize] = useState(25);
@@ -73,7 +76,7 @@ export default function ArticlesTab({ articles: initialArticles, autoEditId }: {
   }, []);
 
   // Reset to page 1 whenever filters change
-  useEffect(() => { setPage(1); }, [search, filterStatus, filterCategory, filterSubcategory, pageSize]);
+  useEffect(() => { setPage(1); }, [search, filterStatus, filterLang, filterCategory, filterSubcategory, pageSize]);
 
   const subcats = useMemo(
     () => cats.find((c) => c.slug === filterCategory)?.subcategories ?? [],
@@ -85,6 +88,7 @@ export default function ArticlesTab({ articles: initialArticles, autoEditId }: {
     return articles.filter((a) => {
       if (q && !a.title.toLowerCase().includes(q) && !a.slug.toLowerCase().includes(q)) return false;
       if (filterStatus && (a.status ?? "draft") !== filterStatus) return false;
+      if (filterLang && (a.lang ?? "uk") !== filterLang) return false;
       if (filterCategory) {
         const match =
           a.category === filterCategory ||
@@ -185,6 +189,8 @@ export default function ArticlesTab({ articles: initialArticles, autoEditId }: {
       date: saved.date.toString().slice(0, 10),
       status: saved.status,
       indexing_sent_at: saved.indexing_sent_at ?? null,
+      lang: saved.lang,
+      canonical_id: saved.canonical_id ?? null,
     };
     setArticles((prev) => {
       const exists = prev.find((a) => a.id === saved.id);
@@ -197,9 +203,58 @@ export default function ArticlesTab({ articles: initialArticles, autoEditId }: {
 
   // ── Editor view ──────────────────────────────────────────────────────────────
   if (view === "editor") {
+    // Find translation siblings from the articles list
+    const getSiblings = (art: typeof editingArticle) => {
+      if (!art || !art.id) return [];
+      const canonicalId = art.lang === "uk" ? art.id : (art.canonical_id ?? null);
+      if (!canonicalId) return [];
+      return articles.filter((a) => {
+        if (!a.id || a.id === art.id) return false;
+        return a.id === canonicalId || a.canonical_id === canonicalId;
+      }).map((a) => ({ id: a.id!, lang: a.lang ?? "uk", title: a.title, slug: a.slug, status: a.status, canonical_id: a.canonical_id }));
+    };
+
+    const handleCreateTranslation = (targetLang: string) => {
+      if (!editingArticle) return;
+      const source = editingArticle;
+      const canonicalId = source.lang === "uk" ? source.id : (source.canonical_id ?? source.id);
+      const template = {
+        id: 0,
+        slug: "",
+        title: "",
+        content: "",
+        type: source.type,
+        category: source.category,
+        subcategory: source.subcategory,
+        category2: source.category2,
+        subcategory2: source.subcategory2,
+        category3: source.category3,
+        subcategory3: source.subcategory3,
+        lang: targetLang,
+        canonical_id: canonicalId ?? null,
+        date: source.date.toString().slice(0, 10),
+        seo_title: null,
+        seo_description: null,
+        status: "draft" as const,
+        revision_count: 0,
+        created_at: "",
+        updated_at: "",
+        excerpt: null,
+        affiliate_url_1: null,
+        affiliate_url_2: null,
+        affiliate_url_3: null,
+        image_url: source.image_url,
+        indexing_sent_at: null,
+      };
+      setEditingArticle(template);
+    };
+
     return (
       <ArticleEditor
         article={editingArticle}
+        siblings={getSiblings(editingArticle)}
+        onEditId={startEdit}
+        onCreateTranslation={handleCreateTranslation}
         onSaved={handleSaved}
         onCancel={() => setView("list")}
       />
@@ -254,6 +309,18 @@ export default function ArticlesTab({ articles: initialArticles, autoEditId }: {
           <option value="draft">Чернетки</option>
         </select>
 
+        {/* Language filter */}
+        <select
+          value={filterLang}
+          onChange={(e) => setFilterLang(e.target.value)}
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+        >
+          <option value="">Всі мови</option>
+          <option value="uk">🇺🇦 UA</option>
+          <option value="ru">🇷🇺 RU</option>
+          <option value="en">🇬🇧 EN</option>
+        </select>
+
         {/* Category filter */}
         <select
           value={filterCategory}
@@ -292,9 +359,9 @@ export default function ArticlesTab({ articles: initialArticles, autoEditId }: {
         </select>
 
         {/* Reset filters */}
-        {(search || filterStatus || filterCategory || filterSubcategory) && (
+        {(search || filterStatus || filterLang || filterCategory || filterSubcategory) && (
           <button
-            onClick={() => { setSearch(""); setFilterStatus(""); setFilterCategory(""); setFilterSubcategory(""); }}
+            onClick={() => { setSearch(""); setFilterStatus(""); setFilterLang(""); setFilterCategory(""); setFilterSubcategory(""); }}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50"
           >
             ✕ Скинути
@@ -307,6 +374,7 @@ export default function ArticlesTab({ articles: initialArticles, autoEditId }: {
           <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
             <tr>
               <th className="px-4 py-3">Назва</th>
+              <th className="px-4 py-3">Мова</th>
               <th className="px-4 py-3">Тип</th>
               <th className="px-4 py-3">Категорія</th>
               <th className="px-4 py-3">Статус</th>
@@ -318,7 +386,7 @@ export default function ArticlesTab({ articles: initialArticles, autoEditId }: {
           <tbody className="divide-y divide-gray-100">
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
                   {articles.length === 0 ? "Немає статей. Створіть першу!" : "Нічого не знайдено"}
                 </td>
               </tr>
@@ -334,6 +402,22 @@ export default function ArticlesTab({ articles: initialArticles, autoEditId }: {
                   <td className="px-4 py-3 font-medium text-gray-900 max-w-xs">
                     <span className="line-clamp-1">{a.title}</span>
                     <span className="mt-0.5 block font-mono text-xs text-gray-400">{a.slug}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const l = a.lang ?? "uk";
+                      const cfg: Record<string, { flag: string; color: string }> = {
+                        uk: { flag: "🇺🇦", color: "bg-blue-50 text-blue-700" },
+                        ru: { flag: "🇷🇺", color: "bg-red-50 text-red-700" },
+                        en: { flag: "🇬🇧", color: "bg-green-50 text-green-700" },
+                      };
+                      const c = cfg[l] ?? { flag: "🌐", color: "bg-gray-100 text-gray-600" };
+                      return (
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${c.color}`}>
+                          {c.flag} {l.toUpperCase()}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${typeInfo.color}`}>

@@ -9,6 +9,14 @@ import HeaderLanguageSwitcher from "./HeaderLanguageSwitcher";
 import { type Category } from "@/lib/categories";
 import { logoFont } from "@/lib/fonts";
 
+function isArticlePath(pathname: string): boolean {
+  const parts = pathname.split("/").filter(Boolean);
+  const segIdx = parts.length >= 1 && ["ru", "en"].includes(parts[0]) ? 1 : 0;
+  const segment = parts[segIdx];
+  const slug = parts[segIdx + 1];
+  return !!segment && !!slug && ["oglyady", "top"].includes(segment);
+}
+
 const nav = [
   { label: "Огляди", href: "/oglyady" },
   { label: "Топ-списки", href: "/top" },
@@ -46,6 +54,8 @@ export default function Header() {
     const q = query.trim();
     if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
   }
+
+  const onArticlePage = isArticlePath(pathname);
 
   return (
     <header className="z-50 bg-white shadow-sm">
@@ -111,8 +121,10 @@ export default function Header() {
               ))}
             </nav>
 
-            {/* Language switcher — article pages only, desktop + mobile */}
-            <HeaderLanguageSwitcher />
+            {/* Language switcher — desktop only (sm+); mobile gets its own row below */}
+            <div className="hidden sm:block">
+              <HeaderLanguageSwitcher />
+            </div>
 
             {/* Mobile: search icon (hidden when search is open) */}
             {!searchOpen && (
@@ -126,6 +138,14 @@ export default function Header() {
             )}
           </div>
         </div>
+
+        {/* ── Mobile: language switcher row (article pages only) ── */}
+        {onArticlePage && (
+          <div className="sm:hidden border-t border-gray-100 px-4 py-1.5 flex items-center gap-2">
+            <span className="text-xs text-gray-400 shrink-0">Мова:</span>
+            <HeaderLanguageSwitcher />
+          </div>
+        )}
 
         {/* ── Mobile: search row (appears below logo row) ── */}
         {searchOpen && (
