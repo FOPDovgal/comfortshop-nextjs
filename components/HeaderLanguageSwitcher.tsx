@@ -1,13 +1,5 @@
 "use client";
 
-// HeaderLanguageSwitcher — compact language pills for the site header.
-//
-// Logic:
-// - Watches usePathname() to detect current page and language.
-// - Calls /api/lang-alts on article pages to fetch available translations.
-// - Renders nothing on non-article pages or when only one language exists.
-// - Current lang → highlighted pill. Available translation → Link. Missing → grayed, no href.
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -25,7 +17,6 @@ function detectLang(pathname: string): Lang {
 
 function isArticlePath(pathname: string): boolean {
   const parts = pathname.split("/").filter(Boolean);
-  // needs at least 2 segments: [lang?/]segment/slug
   const segIdx = parts.length >= 1 && ["ru", "en"].includes(parts[0]) ? 1 : 0;
   const segment = parts[segIdx];
   const slug = parts[segIdx + 1];
@@ -34,31 +25,25 @@ function isArticlePath(pathname: string): boolean {
 
 export default function HeaderLanguageSwitcher() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
   const [alts, setAlts] = useState<Partial<Record<Lang, string>>>({});
-  const [currentLang, setCurrentLang] = useState<Lang>("uk");
-  const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (!isArticlePath(pathname)) {
-      setShow(false);
-      setAlts({});
-      return;
-    }
+    setMounted(true);
+  }, []);
 
-    const lang = detectLang(pathname);
-    setCurrentLang(lang);
-
+  useEffect(() => {
+    setAlts({});
+    if (!isArticlePath(pathname)) return;
     fetch(`/api/lang-alts?pathname=${encodeURIComponent(pathname)}`)
       .then((r) => (r.ok ? r.json() : {}))
-      .then((data: Partial<Record<Lang, string>>) => {
-        const hasOther = LANGS.some((l) => l !== lang && data[l]);
-        setAlts(data);
-        setShow(hasOther);
-      })
-      .catch(() => setShow(false));
+      .then((data: Partial<Record<Lang, string>>) => setAlts(data))
+      .catch(() => {});
   }, [pathname]);
 
-  if (!show) return null;
+  if (!mounted || !isArticlePath(pathname)) return null;
+
+  const currentLang = detectLang(pathname);
 
   return (
     <div
