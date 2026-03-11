@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { processDbContent } from "@/lib/html-process";
-import { isSupportedLang, getArticleAlternates, buildLanguagesMap } from "@/lib/i18n";
+import { isSupportedLang, getArticleAlternates, buildLanguagesMap, type Lang } from "@/lib/i18n";
 import { getArticleBySlugLang } from "@/lib/articles";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -42,9 +43,11 @@ export default async function TranslatedTopPage({ params }: Props) {
 
   const content = article.content.replace(/^#[^\n]*\n+/, "");
   const locale = lang === "ru" ? "ru-RU" : "en-US";
+  const alts = article.canonical_id != null ? await getArticleAlternates(article.canonical_id) : {};
 
   return (
     <div className="mx-auto max-w-3xl">
+      <LanguageSwitcher alts={alts} currentLang={lang as Lang} />
       <h1 className="mb-4 text-3xl font-bold leading-tight text-gray-900">
         {article.title}
       </h1>

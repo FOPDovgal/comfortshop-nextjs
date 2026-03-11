@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import type { DBArticle } from "@/lib/articles";
 import ArticleEditor from "./ArticleEditor";
 
@@ -46,7 +46,7 @@ type View = "list" | "editor";
 
 const PAGE_SIZES = [10, 25, 50, 100];
 
-export default function ArticlesTab({ articles: initialArticles }: { articles: ArticleMeta[] }) {
+export default function ArticlesTab({ articles: initialArticles, autoEditId }: { articles: ArticleMeta[]; autoEditId?: number | null }) {
   const [articles, setArticles] = useState<ArticleMeta[]>(initialArticles);
   const [view, setView] = useState<View>("list");
   const [editingArticle, setEditingArticle] = useState<DBArticle | null>(null);
@@ -128,7 +128,7 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
     setLoadingMdxSlug(null);
   }
 
-  async function startEdit(id: number) {
+  const startEdit = useCallback(async (id: number) => {
     setLoadingId(id);
     const res = await fetch(`/api/admin/articles/${id}`);
     if (res.ok) {
@@ -137,7 +137,12 @@ export default function ArticlesTab({ articles: initialArticles }: { articles: A
       setView("editor");
     }
     setLoadingId(null);
-  }
+  }, []);
+
+  // Auto-open editor when navigated from ImagesTab via ?tab=articles&edit=X
+  useEffect(() => {
+    if (autoEditId) { startEdit(autoEditId); }
+  }, [autoEditId, startEdit]);
 
   async function handleDelete(id: number) {
     if (!confirm("Видалити статтю? Цю дію не можна скасувати.")) return;

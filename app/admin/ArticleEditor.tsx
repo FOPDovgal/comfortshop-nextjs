@@ -1076,6 +1076,34 @@ export default function ArticleEditor({ article, onSaved, onCancel }: Props) {
             </select>
           </div>
 
+          {/* Image governance bridge */}
+          {!isNew && (() => {
+            const entityKey = article!.lang === "uk"
+              ? article!.id
+              : article!.canonical_id;
+            if (entityKey == null) return null;
+            return (
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-indigo-700">Зображення</p>
+                {article!.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={article!.image_url}
+                    alt=""
+                    className="mb-2 h-20 w-full rounded-lg object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                )}
+                <a
+                  href={`/admin?tab=images&filter=${entityKey}`}
+                  className="block w-full rounded-lg bg-indigo-600 py-2 text-center text-xs font-medium text-white hover:bg-indigo-700"
+                >
+                  🖼 Керувати зображенням
+                </a>
+              </div>
+            );
+          })()}
+
           {!isNew && (
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-500">
               <p>ID: {article!.id}</p>

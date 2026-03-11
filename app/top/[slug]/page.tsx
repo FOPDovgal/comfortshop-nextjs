@@ -9,6 +9,7 @@ import { DISCOVER_PAGES } from "@/lib/discover-pages";
 import { ENTITY_PAGES } from "@/lib/entity-pages";
 import { resolveImage } from "@/lib/images";
 import { getArticleAlternates, buildLanguagesMap } from "@/lib/i18n";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,7 @@ export default async function TopPage({ params }: Props) {
   const content = article.content.replace(/^#[^\n]*\n+/, "");
   const resolvedImage = await resolveImage("article", frontmatter.id != null ? String(frontmatter.id) : null, frontmatter.image_url ?? null);
 
+  const alts = frontmatter.id != null ? await getArticleAlternates(frontmatter.id) : {};
   const allInCategory = await getAllArticlesForCategory(frontmatter.category).catch(() => []);
   const relatedArticles = allInCategory.filter((a) => a.slug !== slug).slice(0, 3);
 
@@ -97,6 +99,8 @@ export default async function TopPage({ params }: Props) {
         {" / "}
         <span>{frontmatter.title}</span>
       </nav>
+
+      <LanguageSwitcher alts={alts} currentLang="uk" />
 
       {/* Title */}
       <h1 className="mb-4 text-3xl font-bold leading-tight text-gray-900">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { AffiliateLink } from "@/lib/affiliate";
 import LinksManager from "./LinksManager";
 import BannerManager from "./BannerManager";
@@ -30,6 +30,23 @@ interface Props {
 
 export default function AdminTabs({ links, articles }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("articles");
+  const [imageFilter, setImageFilter] = useState("");
+  const [autoEditArticleId, setAutoEditArticleId] = useState<number | null>(null);
+
+  // Read URL params on mount to support deep-links:
+  //   /admin?tab=images&filter=42  → open Images tab, pre-fill search with "42"
+  //   /admin?tab=articles&edit=42  → open Articles tab, auto-open editor for article 42
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    const filter = params.get("filter");
+    const edit = params.get("edit");
+    if (tab && TABS.some((t) => t.id === tab)) {
+      setActiveTab(tab as TabId);
+    }
+    if (filter) setImageFilter(filter);
+    if (edit && !isNaN(Number(edit))) setAutoEditArticleId(Number(edit));
+  }, []);
 
   return (
     <div>
@@ -52,7 +69,7 @@ export default function AdminTabs({ links, articles }: Props) {
       </div>
 
       {/* Tab content */}
-      {activeTab === "articles"   && <ArticlesTab articles={articles} />}
+      {activeTab === "articles"   && <ArticlesTab articles={articles} autoEditId={autoEditArticleId} />}
       {activeTab === "categories" && <CategoriesTab />}
       {activeTab === "banner"     && <BannerManager />}
       {activeTab === "links"    && (
@@ -67,7 +84,7 @@ export default function AdminTabs({ links, articles }: Props) {
           <LinksManager initialLinks={links} />
         </div>
       )}
-      {activeTab === "images"   && <ImagesTab />}
+      {activeTab === "images"   && <ImagesTab initialFilter={imageFilter} />}
       {activeTab === "footer"   && <FooterTab />}
       {activeTab === "settings" && <ChangePassword />}
     </div>

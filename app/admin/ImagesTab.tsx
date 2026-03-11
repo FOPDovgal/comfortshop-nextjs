@@ -103,9 +103,19 @@ function Badge({ text, colorClass }: { text: string; colorClass: string }) {
   );
 }
 
+// ── Public page URL helpers ───────────────────────────────────────────────────
+
+function resolvePublicUrl(t: TargetRow): string | null {
+  if (t.entity_type === "category")    return `/kategoriyi/${t.entity_key}`;
+  if (t.entity_type === "subcategory") return `/kategoriyi/${t.entity_key}`;
+  if (t.entity_type === "discover")    return `/discover/${t.entity_key}`;
+  if (t.entity_type === "entity")      return `/podarunky/${t.entity_key}`;
+  return null; // article: entity_key is numeric id — cannot derive slug
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function ImagesTab() {
+export default function ImagesTab({ initialFilter = "" }: { initialFilter?: string }) {
   const [stats, setStats]               = useState<Stats | null>(null);
   const [loading, setLoading]           = useState(true);
   const [statsError, setStatsError]     = useState<string | null>(null);
@@ -136,6 +146,9 @@ export default function ImagesTab() {
 
   // History load error
   const [historyError, setHistoryError] = useState<string | null>(null);
+
+  // Search/filter
+  const [search, setSearch]             = useState(initialFilter);
 
   // Regeneration (Replicate)
   type ActiveJob = { id: number; job_status: string; error_message?: string | null };
@@ -457,12 +470,21 @@ export default function ImagesTab() {
 
           {/* ── Targets table ── */}
           <div>
-            <h3 className="mb-3 text-base font-semibold text-gray-900">
-              Останні targets
-              {stats.targets.total === 0 && (
-                <span className="ml-2 text-sm font-normal text-gray-400">(таблиця порожня)</span>
-              )}
-            </h3>
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <h3 className="text-base font-semibold text-gray-900">
+                Останні targets
+                {stats.targets.total === 0 && (
+                  <span className="ml-2 text-sm font-normal text-gray-400">(таблиця порожня)</span>
+                )}
+              </h3>
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Пошук по label, key, типу..."
+                className="w-64 rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-indigo-400 focus:outline-none"
+              />
+            </div>
 
             {stats.targets.total === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 py-12 text-center">
@@ -470,22 +492,39 @@ export default function ImagesTab() {
                   Немає жодного image target. Натисніть &quot;+ Додати target&quot; вгорі.
                 </p>
               </div>
-            ) : (
+            ) : (() => {
+                const q = search.trim().toLowerCase();
+                const visibleTargets = q
+                  ? stats.recent_targets.filter((t) =>
+                      (t.label ?? "").toLowerCase().includes(q) ||
+                      t.entity_key.toLowerCase().includes(q) ||
+                      t.entity_type.toLowerCase().includes(q) ||
+                      (ENTITY_TYPE_LABELS[t.entity_type] ?? "").toLowerCase().includes(q)
+                    )
+                  : stats.recent_targets;
+                if (visibleTargets.length === 0) {
+                  return (
+                    <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 py-8 text-center">
+                      <p className="text-sm text-gray-400">Нічого не знайдено за запитом &quot;{search}&quot;</p>
+                    </div>
+                  );
+                }
+                return (
               <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="border-b border-gray-100 bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left font-medium text-gray-600">ID</th>
                       <th className="px-4 py-3 text-left font-medium text-gray-600">Тип</th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-600">Key</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-600">Key / Label</th>
                       <th className="px-4 py-3 text-left font-medium text-gray-600">Asset</th>
                       <th className="px-4 py-3 text-left font-medium text-gray-600">Статус</th>
                       <th className="px-4 py-3 text-left font-medium text-gray-600">Зображення</th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-600"></th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-600">Дії</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {stats.recent_targets.map((t) => (
+                    {visibleTargets.map((t) => (
                       <Fragment key={t.id}>
                         <tr className={`hover:bg-gray-50 ${expandedId === t.id ? "bg-indigo-50" : ""}`}>
                           <td className="px-4 py-3 font-mono text-xs text-gray-400">{t.id}</td>
@@ -494,7 +533,12 @@ export default function ImagesTab() {
                               {ENTITY_TYPE_LABELS[t.entity_type] ?? t.entity_type}
                             </span>
                           </td>
-                          <td className="px-4 py-3 font-mono text-xs text-gray-600">{t.entity_key}</td>
+                          <td className="px-4 py-3">
+                            {t.label && (
+                              <p className="text-sm font-medium text-gray-900 leading-snug">{t.label}</p>
+                            )}
+                            <p className="font-mono text-xs text-gray-400">{t.entity_key}</p>
+                          </td>
                           <td className="px-4 py-3 text-xs text-gray-400">
                             {t.current_asset_id != null ? `#${t.current_asset_id}` : "—"}
                           </td>
@@ -518,12 +562,40 @@ export default function ImagesTab() {
                             )}
                           </td>
                           <td className="px-4 py-3">
-                            <button
-                              onClick={() => toggleExpand(t.id)}
-                              className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
-                            >
-                              {expandedId === t.id ? "▲ Згорнути" : "⚙ Версії"}
-                            </button>
+                            <div className="flex flex-wrap gap-1">
+                              <button
+                                onClick={() => toggleExpand(t.id)}
+                                className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                              >
+                                {expandedId === t.id ? "▲ Згорнути" : "⚙ Версії"}
+                              </button>
+                              {(() => {
+                                const pageUrl = resolvePublicUrl(t);
+                                if (pageUrl) {
+                                  return (
+                                    <a
+                                      href={pageUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                                    >
+                                      ↗ Сторінка
+                                    </a>
+                                  );
+                                }
+                                if (t.entity_type === "article") {
+                                  return (
+                                    <a
+                                      href={`/admin?tab=articles&edit=${t.entity_key}`}
+                                      className="rounded-lg border border-indigo-200 px-3 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50"
+                                    >
+                                      ✏ Редактор
+                                    </a>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
                           </td>
                         </tr>
 
@@ -760,7 +832,8 @@ export default function ImagesTab() {
                   </tbody>
                 </table>
               </div>
-            )}
+                );
+              })()}
           </div>
         </div>
       )}
