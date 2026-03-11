@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import CategoryNav from "./CategoryNav";
+import HeaderLanguageSwitcher from "./HeaderLanguageSwitcher";
 import { type Category } from "@/lib/categories";
 import { logoFont } from "@/lib/fonts";
 
@@ -109,6 +110,9 @@ export default function Header() {
                 </Link>
               ))}
             </nav>
+
+            {/* Language switcher — article pages only, desktop + mobile */}
+            <HeaderLanguageSwitcher />
 
             {/* Mobile: search icon (hidden when search is open) */}
             {!searchOpen && (
