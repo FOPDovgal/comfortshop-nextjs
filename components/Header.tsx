@@ -9,12 +9,18 @@ import HeaderLanguageSwitcher from "./HeaderLanguageSwitcher";
 import { type Category } from "@/lib/categories";
 import { logoFont } from "@/lib/fonts";
 
-function isArticlePath(pathname: string): boolean {
+// Returns true for page types that have the language switcher:
+// - article pages (/oglyady/slug, /top/slug, /ru/...)
+// - listing pages (/oglyady, /top, /ru/oglyady)
+// - category pages (/kategoriyi/slug, /kategoriyi/slug/subslug)
+function isSupportedPath(pathname: string): boolean {
   const parts = pathname.split("/").filter(Boolean);
-  const segIdx = parts.length >= 1 && ["ru", "en"].includes(parts[0]) ? 1 : 0;
-  const segment = parts[segIdx];
-  const slug = parts[segIdx + 1];
-  return !!segment && !!slug && ["oglyady", "top"].includes(segment);
+  const segIdx = ["ru", "en"].includes(parts[0]) ? 1 : 0;
+  const seg0 = parts[segIdx] ?? "";
+  const seg1 = parts[segIdx + 1];
+  if (["oglyady", "top"].includes(seg0)) return true;
+  if (seg0 === "kategoriyi" && seg1) return true;
+  return false;
 }
 
 const nav = [
@@ -55,7 +61,7 @@ export default function Header() {
     if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
   }
 
-  const onArticlePage = isArticlePath(pathname);
+  const onArticlePage = isSupportedPath(pathname);
 
   return (
     <header className="z-50 bg-white shadow-sm">
