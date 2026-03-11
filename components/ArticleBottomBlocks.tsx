@@ -141,7 +141,9 @@ export default async function ArticleBottomBlocks({
         </section>
       )}
 
-      {matchedDiscover.length > 0 && (
+      {/* Discover/gift blocks are Ukrainian-only — hide on RU/EN to prevent cross-language leakage.
+          Re-enable per-lang when /ru/discover/ and /ru/podarunky/ routes exist. */}
+      {lang === "uk" && matchedDiscover.length > 0 && (
         <section className="mt-10 border-t border-gray-100 pt-8">
           <h2 className="mb-4 text-lg font-semibold text-gray-900">{s.collections}</h2>
           <div className="flex flex-col gap-3">
@@ -162,7 +164,7 @@ export default async function ArticleBottomBlocks({
         </section>
       )}
 
-      {matchedGift.length > 0 && (
+      {lang === "uk" && matchedGift.length > 0 && (
         <section className="mt-10 border-t border-gray-100 pt-8">
           <h2 className="mb-4 text-lg font-semibold text-gray-900">{s.gift}</h2>
           <div className="flex flex-col gap-3">
