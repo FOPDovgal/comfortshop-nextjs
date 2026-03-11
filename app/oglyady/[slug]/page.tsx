@@ -1,12 +1,9 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { getAllGuides, getGuideBySlugFull, getAllArticlesForCategory } from "@/lib/mdx";
 import { processDbContent } from "@/lib/html-process";
-import AffiliateCTABlock from "@/components/AffiliateCTABlock";
 import MdxImg from "@/components/MdxImg";
-import { DISCOVER_PAGES } from "@/lib/discover-pages";
-import { ENTITY_PAGES } from "@/lib/entity-pages";
+import ArticleBottomBlocks, { type RelatedArticle } from "@/components/ArticleBottomBlocks";
 import { resolveImage } from "@/lib/images";
 import { getArticleAlternates, buildLanguagesMap } from "@/lib/i18n";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -64,7 +61,10 @@ export default async function GuidePage({ params }: Props) {
 
   const alts = frontmatter.id != null ? await getArticleAlternates(frontmatter.id) : {};
   const allInCategory = await getAllArticlesForCategory(frontmatter.category).catch(() => []);
-  const relatedArticles = allInCategory.filter((a) => a.slug !== slug).slice(0, 3);
+  const relatedArticles: RelatedArticle[] = allInCategory
+    .filter((a) => a.slug !== slug)
+    .slice(0, 3)
+    .map((a) => ({ slug: a.slug, title: a.frontmatter.title, type: a.frontmatter.type as RelatedArticle["type"], date: a.frontmatter.date }));
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -141,134 +141,17 @@ export default async function GuidePage({ params }: Props) {
         )}
       </article>
 
-      {/* "Де купити" block — article-specific link takes priority over category link */}
-      <AffiliateCTABlock category={frontmatter.category} aliUrl={frontmatter.affiliate_url_1} />
-
-      {/* Related articles */}
-      {relatedArticles.length > 0 && (
-        <section className="mt-12 border-t border-gray-100 pt-8">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Схожі статті</h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {relatedArticles.map((a) => {
-              const href = a.frontmatter.type === "top" ? `/top/${a.slug}` : `/oglyady/${a.slug}`;
-              return (
-                <a
-                  key={a.slug}
-                  href={href}
-                  className="group rounded-xl border border-gray-200 p-4 transition-shadow hover:shadow-md"
-                >
-                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">
-                    {a.frontmatter.type === "top" ? "Топ-список" : "Огляд"}
-                  </p>
-                  <h3 className="text-sm font-semibold leading-snug text-gray-900 group-hover:text-orange-600 line-clamp-3">
-                    {a.frontmatter.title}
-                  </h3>
-                  <time
-                    className="mt-2 block text-xs text-gray-400"
-                    dateTime={new Date(a.frontmatter.date).toISOString()}
-                  >
-                    {new Date(a.frontmatter.date).toLocaleDateString("uk-UA", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </time>
-                </a>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Related discover pages */}
-      {(() => {
-        const articleCats = [frontmatter.category, frontmatter.category2, frontmatter.category3].filter((c): c is string => Boolean(c));
-        const articleSubcatPairs = (
-          [[frontmatter.category, frontmatter.subcategory], [frontmatter.category2, frontmatter.subcategory2], [frontmatter.category3, frontmatter.subcategory3]] as [string | undefined, string | undefined][]
-        ).filter((p): p is [string, string] => Boolean(p[0] && p[1]));
-
-        const matched = DISCOVER_PAGES
-          .filter((p) => p.status === "published")
-          .flatMap((p) => {
-            const cats = new Set(p.sources.categories ?? []);
-            const hasSubMatch = (p.sources.subcategories ?? []).some(({ cat, sub }) =>
-              articleSubcatPairs.some(([ac, as]) => ac === cat && as === sub)
-            );
-            const hasCatMatch = articleCats.some((c) => cats.has(c));
-            if (!hasSubMatch && !hasCatMatch) return [];
-            return [{ page: p, score: hasSubMatch ? 2 : 1 }];
-          })
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 3)
-          .map((m) => m.page);
-
-        if (matched.length === 0) return null;
-        return (
-          <section className="mt-10 border-t border-gray-100 pt-8">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Пов&apos;язані добірки</h2>
-            <div className="flex flex-col gap-3">
-              {matched.map((p) => (
-                <Link
-                  key={p.slug}
-                  href={`/discover/${p.slug}`}
-                  className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md"
-                >
-                  <span className="text-xl">📋</span>
-                  <div>
-                    <p className="font-semibold text-gray-900 group-hover:text-orange-600 leading-snug">{p.title}</p>
-                    <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">{p.seo_description}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        );
-      })()}
-
-      {/* Gift entity pages — "Підійде як подарунок" */}
-      {(() => {
-        const articleCats = [frontmatter.category, frontmatter.category2, frontmatter.category3].filter((c): c is string => Boolean(c));
-        const articleSubcatPairs = (
-          [[frontmatter.category, frontmatter.subcategory], [frontmatter.category2, frontmatter.subcategory2], [frontmatter.category3, frontmatter.subcategory3]] as [string | undefined, string | undefined][]
-        ).filter((p): p is [string, string] => Boolean(p[0] && p[1]));
-
-        const matched = ENTITY_PAGES
-          .filter((p) => p.status === "published")
-          .flatMap((p) => {
-            const cats = new Set(p.sources.categories ?? []);
-            const hasSubMatch = (p.sources.subcategories ?? []).some(({ cat, sub }) =>
-              articleSubcatPairs.some(([ac, as]) => ac === cat && as === sub)
-            );
-            const hasCatMatch = articleCats.some((c) => cats.has(c));
-            if (!hasSubMatch && !hasCatMatch) return [];
-            return [{ page: p, score: hasSubMatch ? 2 : 1 }];
-          })
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 3)
-          .map((m) => m.page);
-
-        if (matched.length === 0) return null;
-        return (
-          <section className="mt-10 border-t border-gray-100 pt-8">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Підійде як подарунок</h2>
-            <div className="flex flex-col gap-3">
-              {matched.map((p) => (
-                <Link
-                  key={p.slug}
-                  href={`/podarunky/${p.slug}`}
-                  className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md"
-                >
-                  <span className="text-xl">🎁</span>
-                  <div>
-                    <p className="font-semibold text-gray-900 group-hover:text-orange-600 leading-snug">{p.title}</p>
-                    <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">{p.seo_description}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        );
-      })()}
+      <ArticleBottomBlocks
+        lang="uk"
+        category={frontmatter.category}
+        category2={frontmatter.category2}
+        category3={frontmatter.category3}
+        subcategory={frontmatter.subcategory}
+        subcategory2={frontmatter.subcategory2}
+        subcategory3={frontmatter.subcategory3}
+        affiliateUrl={frontmatter.affiliate_url_1}
+        relatedArticles={relatedArticles}
+      />
     </div>
   );
 }
