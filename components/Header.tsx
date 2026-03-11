@@ -14,6 +14,7 @@ import { logoFont } from "@/lib/fonts";
 // - listing pages (/oglyady, /top, /ru/oglyady)
 // - category pages (/kategoriyi/slug, /kategoriyi/slug/subslug)
 function isSupportedPath(pathname: string): boolean {
+  if (pathname === "/") return true;
   const parts = pathname.split("/").filter(Boolean);
   const segIdx = ["ru", "en"].includes(parts[0]) ? 1 : 0;
   const seg0 = parts[segIdx] ?? "";

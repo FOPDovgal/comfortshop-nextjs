@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type Lang = "uk" | "ru" | "en";
-type PageType = "article" | "listing" | "category" | "unknown";
+type PageType = "article" | "listing" | "category" | "home" | "unknown";
 
 const LANG_LABELS: Record<Lang, string> = { uk: "UA", ru: "RU", en: "EN" };
 const LANGS: Lang[] = ["uk", "ru", "en"];
@@ -16,9 +16,16 @@ const LISTING_ROUTE_LANGS: Lang[] = ["uk", "ru"];
 // Which langs have category pages at (lang)/kategoriyi/...
 const CATEGORY_ROUTE_LANGS: Lang[] = ["uk", "ru"];
 
+// Homepage only exists in uk for now
+const HOME_ROUTE_LANGS: Lang[] = ["uk"];
+
 function getPageInfo(pathname: string): { type: PageType; lang: Lang; basePath: string } {
   const parts = pathname.split("/").filter(Boolean);
-  const hasLangPrefix = parts.length > 0 && ["ru", "en"].includes(parts[0]);
+
+  // Homepage
+  if (parts.length === 0) return { type: "home", lang: "uk", basePath: "/" };
+
+  const hasLangPrefix = ["ru", "en"].includes(parts[0]);
   const lang: Lang = hasLangPrefix ? (parts[0] as Lang) : "uk";
   const segIdx = hasLangPrefix ? 1 : 0;
   const seg0 = parts[segIdx] ?? "";
@@ -41,10 +48,15 @@ function getPageInfo(pathname: string): { type: PageType; lang: Lang; basePath: 
 }
 
 function getStaticAlts(
-  type: "listing" | "category",
+  type: "listing" | "category" | "home",
   basePath: string
 ): Partial<Record<Lang, string | null>> {
-  const routeLangs = type === "listing" ? LISTING_ROUTE_LANGS : CATEGORY_ROUTE_LANGS;
+  const routeLangs =
+    type === "home"
+      ? HOME_ROUTE_LANGS
+      : type === "listing"
+      ? LISTING_ROUTE_LANGS
+      : CATEGORY_ROUTE_LANGS;
   const result: Partial<Record<Lang, string | null>> = {};
   for (const lang of LANGS) {
     const url = lang === "uk" ? basePath : `/${lang}${basePath}`;
@@ -82,7 +94,7 @@ export default function HeaderLanguageSwitcher() {
   const effectiveAlts: Partial<Record<Lang, string | null>> =
     pageInfo.type === "article"
       ? apiAlts
-      : getStaticAlts(pageInfo.type, pageInfo.basePath);
+      : getStaticAlts(pageInfo.type as "listing" | "category" | "home", pageInfo.basePath);
 
   return (
     <div
